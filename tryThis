@@ -1,0 +1,9 @@
+        <Button
+            android:id="@+id/toolbar_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Click Me"
+            android:layout_gravity="end|center_vertical"
+            android:layout_alignParentRight="true"
+            android:padding="8dp"
+            android:layout_marginEnd="16dp" />
