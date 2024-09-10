@@ -10,11 +10,23 @@
 
 
 
-        val toolbarButton = findViewById<ImageView>(R.id.toolbar_button)
+@Override
+public void extendComponents(Bundle savedInstanceState) {
+    super.extendComponents(savedInstanceState);
+    // Other initializations
 
-        // Set an OnClickListener to handle button clicks
-        toolbarButton.setOnClickListener {
-            // Navigate to another activity when button is clicked
-            val intent = Intent(this, TargetActivity::class.java)
-            startActivity(intent)
+    // Find the button inside the toolbar
+    Button toolbarButton = findViewById(R.id.toolbar_button);
+
+    // Set an OnClickListener for the button
+    toolbarButton.setOnClickListener(new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            // Redirect to another activity or perform any action
+            Intent intent = new Intent(SetUpActivity.this, TargetActivity.class);
+            startActivity(intent);
         }
+    });
+
+    // Other existing code...
+}
