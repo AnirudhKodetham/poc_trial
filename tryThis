@@ -7,3 +7,14 @@
             android:layout_alignParentRight="true"
             android:padding="8dp"
             android:layout_marginEnd="16dp" />
+
+
+
+        val toolbarButton = findViewById<ImageView>(R.id.toolbar_button)
+
+        // Set an OnClickListener to handle button clicks
+        toolbarButton.setOnClickListener {
+            // Navigate to another activity when button is clicked
+            val intent = Intent(this, TargetActivity::class.java)
+            startActivity(intent)
+        }
