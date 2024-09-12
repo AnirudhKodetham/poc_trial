@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Enter bookmark name"
+        android:textSize="16sp"
+        android:paddingBottom="8dp"/>
+
+    <EditText
+        android:id="@+id/bookmark_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Bookmark Name"
+        android:inputType="text" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end"
+        android:layout_marginTop="16dp">
+
+        <Button
+            android:id="@+id/cancel_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cancel" />
+
+        <Button
+            android:id="@+id/save_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Save"
+            android:layout_marginStart="16dp" />
+    </LinearLayout>
+
+</LinearLayout>
+
+
+
+ImageView toolbarImageView = findViewById(R.id.toolbar_image);
+
+toolbarImageView.setOnClickListener(new View.OnClickListener() {
+    @Override
+    public void onClick(View v) {
+        // Create an AlertDialog Builder
+        AlertDialog.Builder builder = new AlertDialog.Builder(SetUpActivity.this);
+        
+        // Inflate the custom layout
+        LayoutInflater inflater = getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_bookmark, null);
+        builder.setView(dialogView);
+
+        // Get references to the EditText and buttons in the dialog
+        final EditText bookmarkNameEditText = dialogView.findViewById(R.id.bookmark_name);
+        Button saveButton = dialogView.findViewById(R.id.save_button);
+        Button cancelButton = dialogView.findViewById(R.id.cancel_button);
+
+        // Create and show the dialog
+        final AlertDialog dialog = builder.create();
+        dialog.show();
+
+        // Set the onClickListener for the Save button
+        saveButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String bookmarkName = bookmarkNameEditText.getText().toString().trim();
+
+                // You can save the bookmark name as needed (e.g., SharedPreferences, database, etc.)
+                if (!bookmarkName.isEmpty()) {
+                    Toast.makeText(SetUpActivity.this, "Bookmark saved: " + bookmarkName, Toast.LENGTH_SHORT).show();
+                    // Here you could save the bookmark logic, e.g., save to SharedPreferences
+                } else {
+                    Toast.makeText(SetUpActivity.this, "Bookmark name cannot be empty", Toast.LENGTH_SHORT).show();
+                }
+                dialog.dismiss(); // Close the dialog
+            }
+        });
+
+        // Set the onClickListener for the Cancel button
+        cancelButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialog.dismiss(); // Close the dialog
+            }
+        });
+    }
+});
+
+
+SharedPreferences sharedPreferences = getSharedPreferences("Bookmarks", MODE_PRIVATE);
+SharedPreferences.Editor editor = sharedPreferences.edit();
+editor.putString(bookmarkName, "some_value_if_needed");  // Save the bookmark name
+editor.apply();
