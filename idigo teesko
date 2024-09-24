@@ -1,0 +1,182 @@
+Coverter file
+class BookMarkConverter : ResponseConverter {
+    
+    override fun convert(response: BaseResponse): BookMarkModel {
+        val page = response.page
+        val bookmarks = page?.bookmarks?.map {
+            Bookmark(
+                it.actionType,
+                it.pageType,
+                it.requestURL,
+                it.extraParameters?.pageTitle,
+                it.extraParameters?.browserUrl
+            )
+        } ?: emptyList()
+
+        return BookMarkModel(page?.screenHeading ?: "Bookmarks", bookmarks)
+    }
+}
+
+
+
+
+BookmarkModel.kt
+
+data class BookMarkModel(
+    val screenHeading: String,
+    val bookmarks: List<Bookmark>
+)
+
+data class Bookmark(
+    val actionType: String,
+    val pageType: String,
+    val requestURL: String,
+    val pageTitle: String?,
+    val browserUrl: String?
+)
+
+
+
+
+
+
+BookmarksAdapter.kt
+
+
+
+class BookmarksAdapter(private var bookmarks: List<Bookmark>) :
+    RecyclerView.Adapter<BookmarksAdapter.BookmarkViewHolder>() {
+
+    inner class BookmarkViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val title: TextView = itemView.findViewById(R.id.bookmark_title)
+        val url: TextView = itemView.findViewById(R.id.bookmark_url)
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BookmarkViewHolder {
+        val view = LayoutInflater.from(parent.context)
+            .inflate(R.layout.item_bookmark, parent, false)
+        return BookmarkViewHolder(view)
+    }
+
+    override fun onBindViewHolder(holder: BookmarkViewHolder, position: Int) {
+        val bookmark = bookmarks[position]
+        holder.title.text = bookmark.pageTitle
+        holder.url.text = bookmark.browserUrl
+    }
+
+    override fun getItemCount(): Int = bookmarks.size
+
+    fun updateList(newBookmarks: List<Bookmark>) {
+        bookmarks = newBookmarks
+        notifyDataSetChanged()
+    }
+}
+
+
+BookmarkFragment.kt
+
+
+
+class BookmarkFragment : Fragment() {
+
+    private lateinit var bookmarksAdapter: BookmarksAdapter
+    private lateinit var bookmarkList: RecyclerView
+
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        val view = inflater.inflate(R.layout.fragment_bookmark, container, false)
+        bookmarkList = view.findViewById(R.id.bookmark_list)
+        bookmarkList.layoutManager = LinearLayoutManager(context)
+
+        // Initialize adapter
+        bookmarksAdapter = BookmarksAdapter(listOf())
+        bookmarkList.adapter = bookmarksAdapter
+
+        return view
+    }
+
+    fun updateBookmarks(bookmarkModel: BookMarkModel) {
+        bookmarksAdapter.updateList(bookmarkModel.bookmarks)
+    }
+}
+
+
+fragment_bookmark.xml
+
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/bookmark_heading"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Bookmarks"
+        android:textSize="20sp"
+        android:padding="8dp" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/bookmark_list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+</LinearLayout>
+
+
+
+item_bookmark.xml
+
+
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="8dp">
+
+    <TextView
+        android:id="@+id/bookmark_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Page Title"
+        android:textSize="18sp" />
+
+    <TextView
+        android:id="@+id/bookmark_url"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="URL"
+        android:textSize="14sp"
+        android:textColor="@android:color/darker_gray" />
+</LinearLayout>
+
+
+some mofid
+
+toolbarImageView.setOnClickListener {
+    val response = // (your JSON response)
+
+    try {
+        val baseResponse = ResponseDeserializer.deserialize(response, "")
+        val bookmarkModel = BookMarkConverter().convert(baseResponse)
+
+        val fragment = BookmarkFragment()
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragment_container, fragment)
+            .commit()
+
+        fragment.updateBookmarks(bookmarkModel)
+
+    } catch (e: Exception) {
+        throw RuntimeException(e)
+    }
+
+    Toast.makeText(this, "Your page is bookmarked", Toast.LENGTH_SHORT).show()
+}
+
+
+
