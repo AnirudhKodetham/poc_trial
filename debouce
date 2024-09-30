@@ -1,0 +1,32 @@
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+import android.text.TextUtils
+
+// Assuming you're inside a Coroutine scope
+
+fun observeTextChanges() {
+    val inputDelay = 300L // Example debounce time
+    val textFlow = model.textChanges() // Flow emitting text changes (you'll define this)
+
+    CoroutineScope(Dispatchers.Main).launch {
+        textFlow
+            .map { it?.trim() } // Trim input
+            .onEach { text ->
+                if (TextUtils.isEmpty(text)) {
+                    showSearchOverlay()
+                }
+            }
+            .filterNot { TextUtils.isEmpty(it) } // Filter out empty text
+            .filter { it.length > 1 } // Proceed if the length is greater than 1
+            .debounce(inputDelay) // Wait for debounce delay
+            .collect {
+                getOverlayData() // Call your function after debounce
+            }
+    }
+}
+
+// You'll need to provide a Flow for text changes, for example, using a TextWatcher or LiveData observer.
+fun model.textChanges(): Flow<String?> {
+    // Replace with actual Flow emitting text changes
+    return flowOf(model.text) // This is just an example, modify accordingly
+}
