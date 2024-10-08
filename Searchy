@@ -1,0 +1,84 @@
+import android.content.Context;
+import android.content.SharedPreferences;
+
+// Define constants for SharedPreferences
+private static final String PREFS_NAME = "SearchPrefs";
+private static final String KEY_SEARCH_QUERY = "search_query";
+
+// Method to save search query to SharedPreferences
+private void saveSearchQueryToSharedPreferences(String query) {
+    SharedPreferences sharedPreferences = getApplicationContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+    SharedPreferences.Editor editor = sharedPreferences.edit();
+    editor.putString(KEY_SEARCH_QUERY, query);
+    editor.apply();  // Save changes asynchronously
+}
+
+// Method to retrieve search query from SharedPreferences
+private String getSearchQueryFromSharedPreferences() {
+    SharedPreferences sharedPreferences = getApplicationContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+    return sharedPreferences.getString(KEY_SEARCH_QUERY, "");  // Return an empty string if no data exists
+}
+
+@Override
+public void habSearchChange(SearchTextFieldAtomEnum searchTextFieldAtomEnum, @NonNull String query, boolean focus) {
+    HashMap<String, Object> requestParams;
+    String input_field = "searchInput";
+    searchQuery = query;
+    if (habContentModel == null) {
+        return;
+    }
+    switch (searchTextFieldAtomEnum) {
+        case AFTER_TEXT_CHANGED:
+            Log.d("QUERY", "AFTER TEXT CHANGE");
+            if (TextUtils.isEmpty(query.trim()) && focus && searchListTemplateView!=null && searchListTemplateView.getVisibility()==View.VISIBLE) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        searchListPresenter.showSearchOverlay(searchListTemplateView, searchOverlayView);
+                    }
+                });
+            } else {
+                if (query.trim().length() > 2) {
+                    requestParams = new HashMap<>();
+                    requestParams.put(input_field, query.trim());
+                    if (getCurrentFragment() != null) {
+                        requestParams.put(Constants.PAGE_TYPE, getCurrentFragment().getPageType());
+                    }
+                    searchListPresenter.getSearchOverlayData(getParent(), getApplicationContext(), habContentModel.getSearchActionModel(), requestParams, searchListTemplateView, searchOverlayView, searchAtomView);
+                }
+            }
+            break;
+        case ON_CLOSE:
+            Log.d("QUERY", "ON CLOSE");
+            searchListPresenter.hideSearchOverlay(searchListTemplateView, searchOverlayView);
+            searchListPresenter.hideKeyBoard(getParent());
+            break;
+        case ON_SEARCH:
+            Log.d("QUERY", "ON SEARCH");
+            if (TextUtils.isEmpty(query.trim()) || (!TextUtils.isEmpty(query.trim()) && query.length() < 2)) {
+                return;
+            }
+
+            // Save the search query to SharedPreferences
+            saveSearchQueryToSharedPreferences(query.trim());
+
+            requestParams = new HashMap<>();
+            requestParams.put(input_field, query.trim());
+
+            Log.d(query,"this is it");
+
+            if (getCurrentFragment() != null) {
+                requestParams.put(Constants.PAGE_TYPE, getCurrentFragment().getPageType());
+            }
+            if (searchDoneActionModel != null) {
+                ActionModel doneAction = searchDoneActionModel;
+                HashMap<String, Object> analyticsData = new HashMap<>();
+                analyticsData.put(KEY_SEARCH_TERM, query.trim());
+                doneAction.setAnalyticsData(analyticsData);
+                executeAction(doneAction, true, requestParams);
+            }
+            searchListPresenter.hideSearchOverlay(searchListTemplateView, searchOverlayView);
+            searchListPresenter.hideKeyBoard(getParent());
+            break;
+    }
+}
