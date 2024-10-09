@@ -1,32 +1,107 @@
-        <Button
-            android:id="@+id/toolbar_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Click Me"
-            android:layout_gravity="end|center_vertical"
-            android:layout_alignParentRight="true"
-            android:padding="8dp"
-            android:layout_marginEnd="16dp" />
+private static final String PREFS_NAME = "SearchPrefs";
+private static final String KEY_RECENT_SEARCHES = "recent_searches"; // Store recent searches as a JSON array or string
+private static final int MAX_RECENT_SEARCHES = 5; // Limit to 5 recent searches
 
+// Save a search query to recent searches
+private void saveSearchQueryToSharedPreferences(String query) {
+    SharedPreferences sharedPreferences = getApplicationContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+    SharedPreferences.Editor editor = sharedPreferences.edit();
 
+    // Retrieve existing searches
+    String recentSearchesJson = sharedPreferences.getString(KEY_RECENT_SEARCHES, "[]");
+    List<String> recentSearches = new Gson().fromJson(recentSearchesJson, new TypeToken<List<String>>() {}.getType());
+
+    // Add the new query if it's not already in the list
+    if (!recentSearches.contains(query)) {
+        if (recentSearches.size() >= MAX_RECENT_SEARCHES) {
+            recentSearches.remove(0); // Remove the oldest search
+        }
+        recentSearches.add(query);
+    }
+
+    // Save updated list to SharedPreferences
+    editor.putString(KEY_RECENT_SEARCHES, new Gson().toJson(recentSearches));
+    editor.apply();
+}
+
+// Get recent searches from SharedPreferences
+private List<String> getRecentSearchesFromSharedPreferences() {
+    SharedPreferences sharedPreferences = getApplicationContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+    String recentSearchesJson = sharedPreferences.getString(KEY_RECENT_SEARCHES, "[]");
+    return new Gson().fromJson(recentSearchesJson, new TypeToken<List<String>>() {}.getType());
+}
+
+// Display recent searches in the UI
+private void displayRecentSearches() {
+    List<String> recentSearches = getRecentSearchesFromSharedPreferences();
+    if (recentSearches.isEmpty()) {
+        // Hide recent searches view if there are no recent searches
+        searchListTemplateView.setVisibility(View.GONE);
+    } else {
+        // Show recent searches in a list
+        searchListTemplateView.setVisibility(View.VISIBLE);
+        searchListPresenter.showRecentSearches(recentSearches, searchListTemplateView);
+    }
+}
 
 @Override
-public void extendComponents(Bundle savedInstanceState) {
-    super.extendComponents(savedInstanceState);
-    // Other initializations
+public void habSearchChange(SearchTextFieldAtomEnum searchTextFieldAtomEnum, @NonNull String query, boolean focus) {
+    HashMap<String, Object> requestParams;
+    String input_field = "searchInput";
+    searchQuery = query;
 
-    // Find the button inside the toolbar
-    Button toolbarButton = findViewById(R.id.toolbar_button);
+    if (habContentModel == null) {
+        return;
+    }
 
-    // Set an OnClickListener for the button
-    toolbarButton.setOnClickListener(new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            // Redirect to another activity or perform any action
-            Intent intent = new Intent(SetUpActivity.this, TargetActivity.class);
-            startActivity(intent);
-        }
-    });
+    switch (searchTextFieldAtomEnum) {
+        case AFTER_TEXT_CHANGED:
+            Log.d("QUERY", "AFTER TEXT CHANGE");
 
-    // Other existing code...
+            if (TextUtils.isEmpty(query.trim()) && focus) {
+                // Show recent searches when no text is typed
+                displayRecentSearches();
+            } else {
+                searchListTemplateView.setVisibility(View.GONE); // Hide recent searches when typing starts
+                if (query.trim().length() > 2) {
+                    requestParams = new HashMap<>();
+                    requestParams.put(input_field, query.trim());
+                    if (getCurrentFragment() != null) {
+                        requestParams.put(Constants.PAGE_TYPE, getCurrentFragment().getPageType());
+                    }
+                    searchListPresenter.getSearchOverlayData(getParent(), getApplicationContext(), habContentModel.getSearchActionModel(), requestParams, searchListTemplateView, searchOverlayView, searchAtomView);
+                }
+            }
+            break;
+
+        case ON_CLOSE:
+            Log.d("QUERY", "ON CLOSE");
+            searchListPresenter.hideSearchOverlay(searchListTemplateView, searchOverlayView);
+            searchListPresenter.hideKeyBoard(getParent());
+            break;
+
+        case ON_SEARCH:
+            Log.d("QUERY", "ON SEARCH");
+            if (TextUtils.isEmpty(query.trim()) || (!TextUtils.isEmpty(query.trim()) && query.length() < 2)) {
+                return;
+            }
+
+            requestParams = new HashMap<>();
+            requestParams.put(input_field, query.trim());
+
+            if (getCurrentFragment() != null) {
+                requestParams.put(Constants.PAGE_TYPE, getCurrentFragment().getPageType());
+            }
+            if (searchDoneActionModel != null) {
+                ActionModel doneAction = searchDoneActionModel;
+                HashMap<String, Object> analyticsData = new HashMap<>();
+                analyticsData.put(KEY_SEARCH_TERM, query.trim());
+                doneAction.setAnalyticsData(analyticsData);
+                executeAction(doneAction, true, requestParams);
+                saveSearchQueryToSharedPreferences(query); // Save query as recent search
+            }
+            searchListPresenter.hideSearchOverlay(searchListTemplateView, searchOverlayView);
+            searchListPresenter.hideKeyBoard(getParent());
+            break;
+    }
 }
