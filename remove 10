@@ -1,32 +1,64 @@
-private void saveSearchQuery(String query) {
-    SharedPreferences sharedPreferences = getApplicationContext().getSharedPreferences("SearchPrefs", MODE_PRIVATE);
-    SharedPreferences.Editor editor = sharedPreferences.edit();
+import java.util.concurrent.locks.ReentrantLock;
 
-    String savedQueries = sharedPreferences.getString("saved_searches", "");
+public class SearchManager {
+    private final ReentrantLock lock = new ReentrantLock(); // Create a lock to synchronize access to SharedPreferences
 
-    // Split saved queries into a list
-    List<String> queryList = new ArrayList<>(Arrays.asList(savedQueries.split(",")));
+    private void saveSearchQuery(String query) {
+        lock.lock(); // Acquire the lock before modifying SharedPreferences
+        try {
+            SharedPreferences sharedPreferences = getApplicationContext().getSharedPreferences("SearchPrefs", MODE_PRIVATE);
+            SharedPreferences.Editor editor = sharedPreferences.edit();
 
-    // Avoid duplicates
-    if (!queryList.contains(query)) {
-        // Add new query
-        queryList.add(0, query); // Add at the beginning to keep the most recent first
+            String savedQueries = sharedPreferences.getString("saved_searches", "");
 
-        // Remove the last query if the list exceeds 10 entries
-        if (queryList.size() > 10) {
-            queryList.remove(queryList.size() - 1); // Remove the oldest one
+            // Split saved queries into a list
+            List<String> queryList = new ArrayList<>(Arrays.asList(savedQueries.split(",")));
+
+            // Avoid duplicates
+            if (!queryList.contains(query)) {
+                // Add new query
+                queryList.add(0, query); // Add at the beginning to keep the most recent first
+
+                // Remove the last query if the list exceeds 10 entries
+                if (queryList.size() > 10) {
+                    queryList.remove(queryList.size() - 1); // Remove the oldest one
+                }
+
+                // Join the queries back into a comma-separated string
+                savedQueries = TextUtils.join(",", queryList);
+                editor.putString("saved_searches", savedQueries);
+                editor.apply();
+            }
+        } finally {
+            lock.unlock(); // Release the lock to allow other threads to access
         }
-
-        // Join the queries back into a comma-separated string
-        savedQueries = TextUtils.join(",", queryList);
-        editor.putString("saved_searches", savedQueries);
-        editor.apply();
     }
-}
 
-private void logSavedSearchQueries() {
-    SharedPreferences sharedPreferences = getApplicationContext().getSharedPreferences("SearchPrefs", MODE_PRIVATE);
-    String savedQueries = sharedPreferences.getString("saved_searches", "");
+    private void logSavedSearchQueries() {
+        lock.lock(); // Acquire the lock before reading from SharedPreferences
+        try {
+            SharedPreferences sharedPreferences = getApplicationContext().getSharedPreferences("SearchPrefs", MODE_PRIVATE);
+            String savedQueries = sharedPreferences.getString("saved_searches", "");
 
-    Log.d("Saved Queries", savedQueries);
+            Log.d("Saved Queries", savedQueries);
+        } finally {
+            lock.unlock(); // Release the lock after reading
+        }
+    }
+
+    private void clearSavedSearchQueries() {
+        lock.lock(); // Acquire the lock before clearing SharedPreferences
+        try {
+            SharedPreferences sharedPreferences = getApplicationContext().getSharedPreferences("SearchPrefs", MODE_PRIVATE);
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+
+            // Remove the saved_searches key
+            editor.remove("saved_searches");
+            editor.apply();
+
+            Log.d("Saved Queries", "Search queries cleared");
+        } finally {
+            lock.unlock(); // Release the lock after clearing
+        }
+    }
 }
