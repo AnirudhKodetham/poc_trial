@@ -1,0 +1,32 @@
+private void saveSearchQuery(String query) {
+    SharedPreferences sharedPreferences = getApplicationContext().getSharedPreferences("SearchPrefs", MODE_PRIVATE);
+    SharedPreferences.Editor editor = sharedPreferences.edit();
+
+    String savedQueries = sharedPreferences.getString("saved_searches", "");
+
+    // Split saved queries into a list
+    List<String> queryList = new ArrayList<>(Arrays.asList(savedQueries.split(",")));
+
+    // Avoid duplicates
+    if (!queryList.contains(query)) {
+        // Add new query
+        queryList.add(0, query); // Add at the beginning to keep the most recent first
+
+        // Remove the last query if the list exceeds 10 entries
+        if (queryList.size() > 10) {
+            queryList.remove(queryList.size() - 1); // Remove the oldest one
+        }
+
+        // Join the queries back into a comma-separated string
+        savedQueries = TextUtils.join(",", queryList);
+        editor.putString("saved_searches", savedQueries);
+        editor.apply();
+    }
+}
+
+private void logSavedSearchQueries() {
+    SharedPreferences sharedPreferences = getApplicationContext().getSharedPreferences("SearchPrefs", MODE_PRIVATE);
+    String savedQueries = sharedPreferences.getString("saved_searches", "");
+
+    Log.d("Saved Queries", savedQueries);
+}
