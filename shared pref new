@@ -1,0 +1,50 @@
+private void saveSearchQuery(String query) {
+    SharedPreferences sharedPreferences = getApplicationContext().getSharedPreferences("SearchPrefs", MODE_PRIVATE);
+    SharedPreferences.Editor editor = sharedPreferences.edit();
+
+    String savedQueries = sharedPreferences.getString("saved_searches", "");
+
+    // Convert saved queries to a List
+    List<String> searchList = new ArrayList<>(Arrays.asList(savedQueries.split(",")));
+
+    // Remove empty strings from the list
+    searchList.removeAll(Collections.singleton(""));
+
+    // Avoid duplicates
+    if (!searchList.contains(query)) {
+        // If the list has more than 10 items, remove the oldest one
+        if (searchList.size() >= 10) {
+            searchList.remove(0);  // Remove the oldest query (first in the list)
+        }
+
+        // Add the new query
+        searchList.add(query);
+
+        // Join the list back to a comma-separated string
+        savedQueries = TextUtils.join(",", searchList);
+
+        // Save the updated string to SharedPreferences
+        editor.putString("saved_searches", savedQueries);
+        editor.apply();
+    }
+}
+
+private void logSavedSearchQueries() {
+    SharedPreferences sharedPreferences = getApplicationContext().getSharedPreferences("SearchPrefs", MODE_PRIVATE);
+    String savedQueries = sharedPreferences.getString("saved_searches", "");
+
+    Log.d("Saved Queries", savedQueries);
+}
+
+private List<String> getSavedSearchQueries() {
+    SharedPreferences sharedPreferences = getApplicationContext().getSharedPreferences("SearchPrefs", MODE_PRIVATE);
+    String savedQueries = sharedPreferences.getString("saved_searches", "");
+
+    // Split the saved queries by commas and convert to a List
+    List<String> searchList = new ArrayList<>(Arrays.asList(savedQueries.split(",")));
+
+    // Remove any empty strings
+    searchList.removeAll(Collections.singleton(""));
+
+    return searchList;
+}
