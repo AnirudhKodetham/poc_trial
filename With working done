@@ -1,0 +1,87 @@
+private fun showRecentSearches() {
+    overlayView?.removeAllViews()
+    overlayView?.visibility = View.VISIBLE
+    searchListTemplateView?.visibility = View.GONE
+    val searchData = sharedPreferencesUtil?.nSearchList
+    if (searchData?.isEmpty() == true) {
+        context?.let {
+            overlayView?.setBackgroundColor(
+                ContextCompat.getColor(
+                    it,
+                    R.color.overlay_background
+                )
+            )
+        }
+        return
+    }
+
+    searchData?.split(",")?.forEach { searchText ->
+        if (searchText.isNotEmpty()) {
+            val itemLayout = LinearLayout(context)
+            itemLayout.orientation = LinearLayout.HORIZONTAL
+
+            val itemLayoutParams = LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
+            itemLayoutParams.setMargins(0, 18, 0, 16)
+            itemLayout.layoutParams = itemLayoutParams
+
+            // TextView for the search text
+            val textView = MFTextView(this.context)
+            textView.textSize = 18f
+            textView.text = searchText
+            val textParams = LinearLayout.LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f)
+            textView.layoutParams = textParams
+
+            // Set the onClickListener for search item click
+            textView.setOnClickListener {
+                // Log click action for debug
+                Log.d("RecentSearchClick", "Recent search clicked: $searchText")
+
+                // Trigger search done action when a search item is clicked
+                val action = (this@AtomicSearchMoleculeListFragment.pageData as? AtomicSearchListMoleculePageModel)?.searchDoneAction
+                if (!TextUtils.isEmpty(searchText.trim()) && searchText.length >= 2) {
+                    // Update the visibility and focus if applicable
+                    if (searchListTemplateView?.visibility == View.VISIBLE) {
+                        searchListTemplateView?.visibility = View.GONE
+                        searchListTemplateView?.isFocusable = false
+                        overlayView?.visibility = View.GONE
+                    }
+
+                    // Save the clicked search text to recent searches
+                    saveRecentSearches(searchText.trim())
+
+                    // Perform search action
+                    action?.analyticsData?.put(KEY_SEARCH_TERM, searchText.trim())
+                    Log.d("SearchAction", "Search action performed with term: $searchText")
+                }
+            }
+
+            // TextView for the "X" mark
+            val deleteTextView = MFTextView(this.context)
+            deleteTextView.textSize = 18f
+            deleteTextView.text = "x"
+            deleteTextView.setTypeface(null, Typeface.BOLD)
+
+            deleteTextView.setOnClickListener {
+                Log.d("RecentSearchDelete", "Deleting recent search: $searchText")
+                deleteRecentSearch(searchText)
+            }
+
+            val deleteParams = LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT)
+            deleteParams.setMargins(16, 0, 0, 0) // Optional margin to give some space between text and "X"
+            deleteTextView.layoutParams = deleteParams
+
+            // Add the TextView and the "X" mark TextView to the layout
+            itemLayout.addView(textView)
+            itemLayout.addView(deleteTextView)
+
+            // Add the layout to the overlay view
+            overlayView?.addView(itemLayout)
+
+            context?.let {
+                overlayView?.setBackgroundColor(
+                    ContextCompat.getColor(it, R.color.white)
+                )
+            }
+        }
+    }
+}
