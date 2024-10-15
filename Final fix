@@ -1,0 +1,7 @@
+action?.let { actionModel ->
+    val requestParams = hashMapOf<String, Any>(
+        "searchInput" to searchText.trim(),
+        "currentPage" to "Done"
+    )
+    executeAction(actionModel, true, requestParams)
+}
