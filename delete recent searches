@@ -1,0 +1,76 @@
+private fun saveRecentSearches(searchText: String) {
+    val searchData = sharedPreferencesUtil?.nSearchList
+    if (searchData?.isEmpty() == true) {
+        sharedPreferencesUtil?.nSearchList = "$searchText,"
+    } else {
+        // Move the searchText to the front of the list if it already exists, otherwise add it.
+        val newSearchData = StringBuilder(searchText)
+        searchData?.split(",")?.filter { it.isNotEmpty() && it != searchText }?.forEach {
+            newSearchData.append(",$it")
+        }
+        sharedPreferencesUtil?.nSearchList = newSearchData.toString()
+    }
+}
+
+private fun showRecentSearches() {
+    overlayView?.removeAllViews()
+    overlayView?.visibility = View.VISIBLE
+    searchListTemplateView?.visibility = View.GONE
+    val searchData = sharedPreferencesUtil?.nSearchList
+    if (searchData?.isEmpty() == true) {
+        context?.let {
+            overlayView?.setBackgroundColor(
+                ContextCompat.getColor(
+                    it,
+                    R.color.overlay_background
+                )
+            )
+        }
+        return
+    }
+    
+    searchData?.split(",")?.forEach { searchText ->
+        if (searchText.isNotEmpty()) {
+            val itemLayout = LinearLayout(context)
+            itemLayout.orientation = LinearLayout.HORIZONTAL
+
+            // TextView for the search text
+            val textView = MFTextView(this.context)
+            textView.textSize = 16f
+            textView.text = searchText
+            val textParams = LinearLayout.LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f)
+            textView.layoutParams = textParams
+
+            // Button for deleting the search
+            val deleteButton = Button(this.context)
+            deleteButton.text = "X"
+            deleteButton.setOnClickListener {
+                deleteRecentSearch(searchText)
+            }
+
+            val buttonParams = LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT)
+            deleteButton.layoutParams = buttonParams
+
+            // Add the TextView and the Button to the layout
+            itemLayout.addView(textView)
+            itemLayout.addView(deleteButton)
+
+            // Add the layout to the overlay view
+            overlayView?.addView(itemLayout)
+
+            context?.let {
+                overlayView?.setBackgroundColor(
+                    ContextCompat.getColor(it, R.color.white)
+                )
+            }
+        }
+    }
+}
+
+// Function to delete a specific recent search
+private fun deleteRecentSearch(searchText: String) {
+    val searchData = sharedPreferencesUtil?.nSearchList
+    val updatedSearchData = searchData?.split(",")?.filter { it.isNotEmpty() && it != searchText }?.joinToString(",")
+    sharedPreferencesUtil?.nSearchList = updatedSearchData?.plus(",")
+    showRecentSearches()  // Refresh the list after deletion
+}
