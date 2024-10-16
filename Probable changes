@@ -1,0 +1,83 @@
+<com.vzw.hss.myverizon.atomic.views.atoms.ImageAtomView
+    android:id="@+id/iv_mic"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_toStartOf="@+id/iv_assistant"
+    android:layout_centerVertical="true"
+    android:src="@drawable/ic_mic" />
+
+
+
+// Add these imports at the top
+import android.speech.RecognizerIntent
+import android.speech.SpeechRecognizer
+import android.content.pm.PackageManager
+import androidx.core.app.ActivityCompat
+import android.Manifest
+
+// Inside the class:
+var iv_mic: ImageAtomView? = null
+private var speechRecognizer: SpeechRecognizer? = null
+private val REQUEST_RECORD_AUDIO_PERMISSION = 200
+
+// Modify the `initView` function to initialize the mic button
+private fun initView(context: Context) {
+    View.inflate(context, R.layout.hab_content_view, this)
+    MobileFirstApplication.getObjectGraph(context?.applicationContext).inject(this)
+    
+    // Existing view initialization
+    iv_search = findViewById(R.id.iv_search)
+    et_search = findViewById(R.id.et_search)
+    divider = findViewById(R.id.dividerContainer)
+    iv_assistant = findViewById(R.id.iv_assistant)
+    rootRl = findViewById(R.id.rootRl)
+    searchArea = findViewById(R.id.searchArea)
+    iv_mic = findViewById(R.id.iv_mic)
+
+    // Initialize the speech recognizer
+    speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context)
+    iv_mic?.setOnClickListener { startSpeechToText() }
+}
+
+// Function to handle speech-to-text
+private fun startSpeechToText() {
+    if (ActivityCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+        ActivityCompat.requestPermissions(context as Activity, arrayOf(Manifest.permission.RECORD_AUDIO), REQUEST_RECORD_AUDIO_PERMISSION)
+    } else {
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
+        }
+        speechRecognizer?.startListening(intent)
+    }
+}
+
+// Handle the result of speech recognition
+private val speechRecognitionListener = object : RecognitionListener {
+    override fun onResults(results: Bundle) {
+        val spokenText = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.get(0)
+        et_search?.text = spokenText // Populate the search bar with recognized speech
+        performSearch(spokenText) // Call done action after auto-population
+    }
+
+    // Other listener methods...
+}
+
+// Function to trigger search action
+private fun performSearch(query: String?) {
+    // Assuming this is similar to how search is handled when the user types and clicks "done"
+    habClickListener?.OnHabActionClick(ActionModel().apply {
+        searchTerm = query // Populate with recognized text
+    })
+}
+
+// Don't forget to set the speech recognizer listener
+override fun onAttachedToWindow() {
+    super.onAttachedToWindow()
+    speechRecognizer?.setRecognitionListener(speechRecognitionListener)
+}
+
+override fun onDetachedFromWindow() {
+    super.onDetachedFromWindow()
+    speechRecognizer?.destroy() // Cleanup the speech recognizer
+}
