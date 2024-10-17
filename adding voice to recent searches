@@ -1,0 +1,42 @@
+override fun onResults(results: Bundle?) {
+    results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.let { result ->
+        val spokenText = result[0]
+        // Log the spoken text
+        Log.d("SpeechRecognizerResult", "Spoken Text: $spokenText")
+
+        // Trigger the done action with spoken text
+        val action = (this@AtomicSearchMoleculeListFragment.pageData as? AtomicSearchListMoleculePageModel)?.searchDoneAction
+        action?.analyticsData?.put(KEY_SEARCH_TERM, spokenText)
+        Log.d("SearchAction", "Executing search for: $spokenText")
+
+        // Set request parameters
+        action?.let { actionModel ->
+            val requestParams = hashMapOf<String, Any>(
+                "searchInput" to spokenText,
+                "currentPage" to "Done"
+            )
+            // Execute the action to trigger the search
+            executeAction(actionModel, true, requestParams)
+        }
+
+        // Add spokenText to recent searches
+        addToRecentSearches(spokenText)
+    }
+}
+
+// Function to add spokenText to recent searches
+private fun addToRecentSearches(spokenText: String) {
+    // Retrieve existing recent searches from SharedPreferences
+    val sharedPreferences = context?.getSharedPreferences("RecentSearches", Context.MODE_PRIVATE)
+    val recentSearches = sharedPreferences?.getStringSet("recent_searches", mutableSetOf())?.toMutableSet()
+
+    // Add the spokenText to recent searches (ensure no duplicates and move it to the top)
+    recentSearches?.remove(spokenText)  // Remove if already exists
+    recentSearches?.add(spokenText)     // Add the new search term
+
+    // Save updated recent searches back to SharedPreferences
+    sharedPreferences?.edit()?.putStringSet("recent_searches", recentSearches)?.apply()
+
+    // Optionally log the updated recent searches
+    Log.d("RecentSearches", "Updated recent searches: $recentSearches")
+}
