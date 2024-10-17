@@ -1,0 +1,155 @@
+open inner class ClickLiveDataObserver : AtomicBaseFragment.ClickLiveDataObserver() {
+
+    var requestParams: HashMap<String, Any>? = null
+    val runnable = Runnable { getOverlayData() }
+    
+    /**
+     * Method to get overlay Data when user start typing
+     */
+    protected fun getOverlayData() {
+        val model =
+            (this@AtomicSearchMoleculeListFragment.pageData as? AtomicSearchListMoleculePageModel)
+        val action = model?.searchAction
+        searchListPresenter?.getOverlayData(action, requestParams, getOnActionSuccessCallback())
+    }
+
+    override fun onChanged(it: ClickLiveDataObject?) {
+        it ?: return
+
+        val validRequestParams = !it.requestParams.isNullOrEmpty()
+        requestParams = it.requestParams
+        var action: ActionModel? = null
+
+        if (it.model is ActionModel) {
+            action = it.model!! as ActionModel
+        } else if (it.model is SearchTextFieldAtomModel) {
+            val model: SearchTextFieldAtomModel = it.model as SearchTextFieldAtomModel
+            val inputDelay =
+                (this@AtomicSearchMoleculeListFragment.pageData as? AtomicSearchListMoleculePageModel)?.inputDelay
+
+            when (model.searchTextFieldEnum) {
+                SearchTextFieldAtomEnum.AFTER_TEXT_CHANGED -> {
+                    if (TextUtils.isEmpty(model.text?.trim()) && model.hasFocus) {
+                        showRecentSearches()
+                    } else {
+                        if ((model.text!!.trim()).length > 1) {
+                            handler.removeCallbacks(runnable)
+                            inputDelay?.let {
+                                handler.postDelayed(runnable, inputDelay)
+                            } ?: kotlin.run {
+                                getOverlayData()
+                            }
+                        }
+                    }
+                    return
+                }
+
+                SearchTextFieldAtomEnum.EDIT_TEXT_ON_FOCUS -> {
+                    if (TextUtils.isEmpty(model.text)) {
+                        showRecentSearches()
+                        Handler(Looper.getMainLooper()).postDelayed({
+                            if (textFieldView != null) {
+                                val imm = this@AtomicSearchMoleculeListFragment.context?.getSystemService(
+                                    Context.INPUT_METHOD_SERVICE
+                                ) as InputMethodManager
+                                imm.showSoftInput(
+                                    textFieldView,
+                                    InputMethodManager.SHOW_IMPLICIT
+                                )
+                            }
+                        }, 100)
+                    } else {
+                        if ((model.text!!.trim()).length > 1) {
+                            handler.removeCallbacks(runnable)
+                            inputDelay?.let {
+                                handler.postDelayed(runnable, inputDelay)
+                            } ?: kotlin.run {
+                                getOverlayData()
+                            }
+                        }
+                    }
+                    return
+                }
+
+                SearchTextFieldAtomEnum.ON_CLOSE -> {
+                    handler.removeCallbacks(runnable)
+                    hideSearchOverlay()
+                    hideKeyBoard()
+                }
+
+                SearchTextFieldAtomEnum.ON_SEARCH -> {
+                    if (TextUtils.isEmpty(model.text.toString().trim()) || (!TextUtils.isEmpty(
+                            model.text.toString().trim()
+                        ) && model.text!!.length < 2)
+                    ) {
+                        return
+                    }
+                    if (searchListTemplateView?.visibility == View.VISIBLE) {
+                        searchListTemplateView?.visibility = View.GONE
+                        searchListTemplateView?.isFocusable = false
+                        overlayView?.visibility = View.GONE
+                    }
+                    saveRecentSearches(model.text.toString().trim())
+                    action =
+                        (this@AtomicSearchMoleculeListFragment.pageData as? AtomicSearchListMoleculePageModel)?.searchDoneAction
+                    action?.analyticsData?.put(KEY_SEARCH_TERM, model.text.toString().trim())
+                }
+
+                // New case for ON_VOICE to handle speech recognition
+                SearchTextFieldAtomEnum.ON_VOICE -> {
+                    // Start Google Speech Recognizer
+                    startSpeechRecognition()
+                    return
+                }
+            }
+        } else if (it.model is TagMoleculeModel) {
+            val model: TagMoleculeModel = it.model as TagMoleculeModel
+            action = model.action
+            if (searchListTemplateView?.visibility == View.VISIBLE) {
+                searchListTemplateView?.visibility = View.GONE
+                searchListTemplateView?.isFocusable = false
+                overlayView?.visibility = View.GONE
+            }
+        } else {
+            super.onChanged(it)
+            return
+        }
+
+        action?.let { actionModel ->
+            executeAction(actionModel, validRequestParams, it.requestParams)
+        }
+    }
+
+    // Function to invoke speech recognizer
+    private fun startSpeechRecognition() {
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
+        intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak now")
+
+        try {
+            startActivityForResult(intent, SPEECH_REQUEST_CODE)
+        } catch (e: ActivityNotFoundException) {
+            // Handle the error (Toast, log, etc.)
+        }
+    }
+
+    // Handle the speech recognition result in your fragment
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == SPEECH_REQUEST_CODE && resultCode == Activity.RESULT_OK && data != null) {
+            val result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+            result?.let {
+                val spokenText = it[0]
+                // Auto-populate the search text field with the spoken text
+                search_text_field?.setText(spokenText)
+                updateLiveData(SearchTextFieldAtomEnum.AFTER_TEXT_CHANGED)
+            }
+        }
+    }
+
+    companion object {
+        private const val SPEECH_REQUEST_CODE = 100
+    }
+}
