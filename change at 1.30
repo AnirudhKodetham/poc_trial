@@ -1,0 +1,40 @@
+private fun startSpeechRecognition() {
+    val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+        putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+        putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
+        putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak now")
+    }
+
+    try {
+        startActivityForResult(intent, 100) // Start the Google speech recognizer popup
+    } catch (e: ActivityNotFoundException) {
+        // Handle the error (e.g., show a Toast or log)
+    }
+}
+
+// Now, capture the result in onActivityResult
+override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+    super.onActivityResult(requestCode, resultCode, data)
+
+    if (requestCode == 100 && resultCode == Activity.RESULT_OK && data != null) {
+        val result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+        result?.let {
+            val spokenText = it[0]
+            Log.d("SpeechRecognizerResult", "Spoken Text: $spokenText")
+
+            // Now pass the spoken text to the done action for search
+            val action = (this@AtomicSearchMoleculeListFragment.pageData as? AtomicSearchListMoleculePageModel)?.searchDoneAction
+            action?.analyticsData?.put(KEY_SEARCH_TERM, spokenText)
+            Log.d("SearchAction", "Executing search for: $spokenText")
+
+            // Set request parameters and execute action
+            action?.let { actionModel ->
+                val requestParams = hashMapOf<String, Any>(
+                    "searchInput" to spokenText,
+                    "currentPage" to "Done"
+                )
+                executeAction(actionModel, true, requestParams)
+            }
+        }
+    }
+}
