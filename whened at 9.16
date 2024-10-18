@@ -1,0 +1,22 @@
+protected fun getOverlayData() {
+    val model = (this@AtomicSearchMoleculeListFragment.pageData as? AtomicSearchListMoleculePageModel)
+    val action = model?.searchAction
+    val browserUrl = requestParams?.get("browserUrl") as? String
+
+    // Extract the query parameter 'q'
+    val abcd = extractQueryParameter(browserUrl, "q")
+    
+    // Save the recent searches with the extracted query
+    if (abcd != null) {
+        saveRecentSearches(abcd)
+    }
+
+    searchListPresenter?.getOverlayData(action, requestParams, getOnActionSuccessCallback())
+}
+
+private fun extractQueryParameter(url: String?, parameterName: String): String? {
+    if (url.isNullOrEmpty()) return null
+
+    val uri = Uri.parse(url)
+    return uri.getQueryParameter(parameterName)
+}
