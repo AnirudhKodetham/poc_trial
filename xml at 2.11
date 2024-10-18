@@ -1,0 +1,184 @@
+<!-- res/layout/custom_speech_recognition.xml -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="20dp"
+    android:background="@drawable/custom_dialog_bg">
+
+    <!-- Pulsing Microphone Animation -->
+    <ImageView
+        android:id="@+id/microphone_icon"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:src="@drawable/ic_mic"
+        android:contentDescription="Microphone Icon"
+        android:layout_gravity="center"
+        android:layout_marginBottom="20dp"
+        android:scaleType="centerInside" />
+
+    <!-- Listening Status Text -->
+    <TextView
+        android:id="@+id/listening_status"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Listening..."
+        android:textColor="@android:color/white"
+        android:textSize="16sp"
+        android:layout_gravity="center"
+        android:layout_marginBottom="20dp" />
+
+    <!-- Cancel Button -->
+    <Button
+        android:id="@+id/btn_cancel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Cancel"
+        android:textColor="@android:color/white"
+        android:backgroundTint="@color/colorPrimary"
+        android:layout_gravity="center" />
+</LinearLayout>
+
+
+
+
+<!-- res/anim/pulse_animation.xml -->
+<scale xmlns:android="http://schemas.android.com/apk/res/android"
+    android:duration="1000"
+    android:fromXScale="1.0"
+    android:toXScale="1.2"
+    android:fromYScale="1.0"
+    android:toYScale="1.2"
+    android:pivotX="50%"
+    android:pivotY="50%"
+    android:repeatCount="infinite"
+    android:repeatMode="reverse" />
+
+
+
+
+
+
+
+class CustomSpeechRecognizerDialog(private val context: Context) {
+
+    private lateinit var dialog: Dialog
+    private lateinit var microphoneIcon: ImageView
+    private lateinit var listeningStatus: TextView
+    private lateinit var cancelButton: Button
+    private lateinit var speechRecognizer: SpeechRecognizer
+
+    fun show() {
+        // Create and show custom dialog
+        dialog = Dialog(context).apply {
+            requestWindowFeature(Window.FEATURE_NO_TITLE)
+            setCancelable(false)
+            setContentView(R.layout.custom_speech_recognition)
+            window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        }
+
+        // Initialize UI elements
+        microphoneIcon = dialog.findViewById(R.id.microphone_icon)
+        listeningStatus = dialog.findViewById(R.id.listening_status)
+        cancelButton = dialog.findViewById(R.id.btn_cancel)
+
+        // Start pulsing animation
+        val pulseAnimation = AnimationUtils.loadAnimation(context, R.anim.pulse_animation)
+        microphoneIcon.startAnimation(pulseAnimation)
+
+        // Set up cancel button
+        cancelButton.setOnClickListener {
+            stopListening()
+            dialog.dismiss()
+        }
+
+        dialog.show()
+
+        startListening()
+    }
+
+    private fun startListening() {
+        // Initialize SpeechRecognizer
+        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context)
+
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
+            putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak now")
+        }
+
+        speechRecognizer.setRecognitionListener(object : RecognitionListener {
+            override fun onReadyForSpeech(params: Bundle?) {
+                // Update UI when ready
+                listeningStatus.text = "Listening..."
+            }
+
+            override fun onBeginningOfSpeech() {
+                // User has started speaking
+                listeningStatus.text = "Processing..."
+            }
+
+            override fun onRmsChanged(rmsdB: Float) {
+                // Optional: You can update sound level or visualizer here
+            }
+
+            override fun onBufferReceived(buffer: ByteArray?) {
+                // Optional: Handle buffer received
+            }
+
+            override fun onEndOfSpeech() {
+                // User has finished speaking
+                listeningStatus.text = "Finished listening..."
+            }
+
+            override fun onError(error: Int) {
+                // Handle error and dismiss dialog
+                Toast.makeText(context, "Error occurred: $error", Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
+            }
+
+            override fun onResults(results: Bundle?) {
+                results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.let { result ->
+                    val spokenText = result[0]
+                    Log.d("SpeechRecognizerResult", "Spoken Text: $spokenText")
+
+                    // Dismiss the dialog and proceed with search or further actions
+                    dialog.dismiss()
+
+                    // TODO: Execute your action with the spoken text
+                    executeSearch(spokenText)
+                }
+            }
+
+            override fun onPartialResults(partialResults: Bundle?) {
+                // Optional: Handle partial results
+            }
+
+            override fun onEvent(eventType: Int, params: Bundle?) {
+                // Optional: Handle other events
+            }
+        })
+
+        // Start listening for speech input
+        speechRecognizer.startListening(intent)
+    }
+
+    private fun stopListening() {
+        // Stop the speech recognizer when the dialog is dismissed
+        speechRecognizer.stopListening()
+        speechRecognizer.destroy()
+    }
+
+    private fun executeSearch(spokenText: String) {
+        // TODO: Replace with your search action logic
+        Log.d("CustomSpeechRecognizer", "Executing search for: $spokenText")
+    }
+}
+
+
+
+
+
+val customSpeechDialog = CustomSpeechRecognizerDialog(requireContext())
+customSpeechDialog.show()
