@@ -1,0 +1,31 @@
+import android.net.Uri // Ensure you import this
+
+protected fun getOverlayData() {
+    val model = (this@AtomicSearchMoleculeListFragment.pageData as? AtomicSearchListMoleculePageModel)
+    val action = model?.searchAction
+    searchListPresenter?.getOverlayData(action, requestParams, getOnActionSuccessCallback())
+
+    // Log the contents of requestParams
+    Log.d("RequestParams", "RequestParams content: $requestParams")
+
+    // Check if requestParams is not null and log keys and values
+    requestParams?.keys?.forEach { key ->
+        Log.d("RequestParams", "Key: $key, Value: ${requestParams[key]}")
+    }
+
+    // Check if requestParams is not null
+    val browserUrl = requestParams?.get("browserUrl") as? String
+
+    // Debug log for verification
+    Log.d("BrowserUrl", "Extracted browserUrl: $browserUrl")
+
+    // Extract the query parameter using Uri
+    val searchQuery = browserUrl?.let {
+        Uri.parse(it).getQueryParameter("q")
+    }
+
+    // Save the query to recent searches if it is not null
+    searchQuery?.let { query ->
+        saveRecentSearches(query)
+    }
+}
