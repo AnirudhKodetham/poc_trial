@@ -1,0 +1,39 @@
+dependencies {
+    // ML Kit Object Detection
+    implementation 'com.google.mlkit:object-detection:17.0.0'
+}
+
+
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.objects.ObjectDetection
+import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions
+
+// Set up the object detection options
+val options = ObjectDetectorOptions.Builder()
+    .setDetectorMode(ObjectDetectorOptions.SINGLE_IMAGE_MODE) // For detecting in a single image
+    .enableMultipleObjects() // Enable detecting multiple objects
+    .build()
+
+// Initialize the object detector
+val objectDetector = ObjectDetection.getClient(options)
+
+// Load or capture the image
+val image: InputImage = InputImage.fromFilePath(context, imageUri) // You can also use Bitmap or Media.Image
+
+// Process the image
+objectDetector.process(image)
+    .addOnSuccessListener { detectedObjects ->
+        for (detectedObject in detectedObjects) {
+            // Retrieve object information such as bounding box and labels
+            val boundingBox = detectedObject.boundingBox
+            val trackingId = detectedObject.trackingId
+            for (label in detectedObject.labels) {
+                val text = label.text // Object name, e.g., "Car", "Laptop"
+                val confidence = label.confidence // Confidence of detection
+                // Use this data as needed
+            }
+        }
+    }
+    .addOnFailureListener { e ->
+        // Handle detection error
+    }
