@@ -1,0 +1,10 @@
+iv_lens?.setOnClickListener {
+    try {
+        val intent = Intent("com.google.android.gms.actions.SEARCH_GOOGLE_LENS")
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        context.startActivity(intent)
+    } catch (e: ActivityNotFoundException) {
+        // Handle the case where Google Lens is not installed
+        Toast.makeText(context, "Google Lens app is not available.", Toast.LENGTH_SHORT).show()
+    }
+}
