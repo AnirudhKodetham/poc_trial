@@ -1,0 +1,97 @@
+<uses-permission android:name="android.permission.CAMERA" />
+<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+
+
+iv_lens?.setOnClickListener {
+    val options = arrayOf<CharSequence>("Take Photo", "Choose from Gallery", "Cancel")
+    val builder: AlertDialog.Builder = AlertDialog.Builder(context)
+    builder.setTitle("Select Image")
+    builder.setItems(options) { dialog, item ->
+        when {
+            options[item] == "Take Photo" -> {
+                openCamera()  // Method to handle the camera
+            }
+            options[item] == "Choose from Gallery" -> {
+                openGallery() // Method to handle gallery selection
+            }
+            options[item] == "Cancel" -> {
+                dialog.dismiss()
+            }
+        }
+    }
+    builder.show()
+}
+
+
+private fun openCamera() {
+    val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+    if (takePictureIntent.resolveActivity(context.packageManager) != null) {
+        startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE)
+    }
+}
+
+
+private fun openGallery() {
+    val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+    intent.type = "image/*"
+    startActivityForResult(intent, REQUEST_PICK_IMAGE)
+}
+
+
+override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+    super.onActivityResult(requestCode, resultCode, data)
+    
+    if (resultCode == Activity.RESULT_OK) {
+        when (requestCode) {
+            REQUEST_IMAGE_CAPTURE -> {
+                // Get the captured image as a Bitmap
+                val imageBitmap = data?.extras?.get("data") as Bitmap
+                processImage(InputImage.fromBitmap(imageBitmap, 0))
+            }
+            REQUEST_PICK_IMAGE -> {
+                // Get the selected image URI
+                val imageUri = data?.data
+                imageUri?.let {
+                    val inputImage = InputImage.fromFilePath(context, it)
+                    processImage(inputImage)
+                }
+            }
+        }
+    }
+}
+
+
+
+private fun processImage(image: InputImage) {
+    val options = ObjectDetectorOptions.Builder()
+        .setDetectorMode(ObjectDetectorOptions.SINGLE_IMAGE_MODE)
+        .enableMultipleObjects()
+        .build()
+
+    val objectDetector = ObjectDetection.getClient(options)
+
+    objectDetector.process(image)
+        .addOnSuccessListener { detectedObjects ->
+            for (detectedObject in detectedObjects) {
+                val boundingBox = detectedObject.boundingBox
+                val trackingId = detectedObject.trackingId
+                for (label in detectedObject.labels) {
+                    val text = label.text // e.g., "Car", "Person"
+                    val confidence = label.confidence
+                    // Do something with this data, like display or store it
+                }
+            }
+        }
+        .addOnFailureListener { e ->
+            Toast.makeText(context, "Failed to detect objects", Toast.LENGTH_SHORT).show()
+        }
+}
+
+
+companion object {
+    private const val REQUEST_IMAGE_CAPTURE = 1
+    private const val REQUEST_PICK_IMAGE = 2
+}
+
