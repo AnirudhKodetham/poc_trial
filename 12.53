@@ -1,0 +1,148 @@
+<!-- dialog_custom_mic.xml -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@drawable/dialog_background_rounded"
+    android:layout_gravity="bottom">
+
+    <ImageView
+        android:id="@+id/imgMicIcon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_mic_custom"
+        android:contentDescription="Mic Icon"
+        android:layout_gravity="center" />
+
+    <TextView
+        android:id="@+id/tvPrompt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Listening..."
+        android:textSize="18sp"
+        android:textColor="@android:color/black"
+        android:layout_marginTop="8dp"
+        android:layout_gravity="center" />
+
+    <TextView
+        android:id="@+id/tvSpokenText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Recognized speech will appear here"
+        android:textSize="16sp"
+        android:textColor="@android:color/darker_gray"
+        android:layout_marginTop="8dp"
+        android:gravity="center"
+        android:visibility="gone" />
+
+</LinearLayout>
+
+<!-- dialog_background_rounded.xml -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="@android:color/white" />
+    <corners android:radius="16dp" />
+</shape>
+
+private fun startSpeechRecognition() {
+    // Create the custom dialog
+    context?.let { ctx ->
+        val dialog = Dialog(ctx)
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        dialog.setContentView(R.layout.dialog_custom_mic)
+        
+        // Set dialog window attributes to display at the bottom
+        val window = dialog.window
+        window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        window?.setGravity(Gravity.BOTTOM)
+        window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+        // Find views in the dialog
+        val micImageView: ImageView = dialog.findViewById(R.id.imgMicIcon)
+        val promptTextView: TextView = dialog.findViewById(R.id.tvPrompt)
+        val spokenTextView: TextView = dialog.findViewById(R.id.tvSpokenText)
+
+        // Show the dialog
+        dialog.show()
+
+        val speechRecognizer = SpeechRecognizer.createSpeechRecognizer(ctx)
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
+            putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak now")
+        }
+
+        speechRecognizer.setRecognitionListener(object : RecognitionListener {
+            override fun onReadyForSpeech(params: Bundle?) {
+                // Ready to receive speech
+            }
+
+            override fun onBeginningOfSpeech() {
+                // User has started speaking
+            }
+
+            override fun onRmsChanged(rmsdB: Float) {
+                // Sound level changed
+            }
+
+            override fun onBufferReceived(buffer: ByteArray?) {
+                // Buffer received
+            }
+
+            override fun onEndOfSpeech() {
+                // User has finished speaking
+            }
+
+            override fun onError(error: Int) {
+                // Handle error and dismiss the dialog
+                dialog.dismiss()
+            }
+
+            override fun onResults(results: Bundle?) {
+                results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.let { result ->
+                    val spokenText = result[0]
+
+                    // Display the recognized text in the dialog
+                    spokenTextView.visibility = View.VISIBLE
+                    spokenTextView.text = spokenText
+
+                    // Delay the search action to allow user to see the result
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        // Trigger the done action with spoken text
+                        val action = (this@AtomicSearchMoleculeListFragment.pageData as? AtomicSearchListMoleculePageModel)?.searchDoneAction
+                        action?.analyticsData?.put(KEY_SEARCH_TERM, spokenText)
+                        Log.d("SearchAction", "Executing search for: $spokenText")
+
+                        // Set request parameters
+                        action?.let { actionModel ->
+                            val requestParams = hashMapOf<String, Any>(
+                                "searchInput" to spokenText,
+                                "currentPage" to "Done"
+                            )
+                            // Execute the action to trigger the search
+                            executeAction(actionModel, true, requestParams)
+                        }
+
+                        // Dismiss the dialog after executing the search
+                        dialog.dismiss()
+                    }, 1500) // 1.5-second delay
+                }
+            }
+
+            override fun onPartialResults(partialResults: Bundle?) {
+                // Handle partial results
+            }
+
+            override fun onEvent(eventType: Int, params: Bundle?) {
+                // Handle events
+            }
+        })
+
+        try {
+            speechRecognizer.startListening(intent)
+        } catch (e: ActivityNotFoundException) {
+            // Handle the error (Toast, log, etc.)
+            dialog.dismiss() // Dismiss the dialog on exception
+        }
+    }
+}
