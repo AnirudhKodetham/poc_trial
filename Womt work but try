@@ -1,0 +1,119 @@
+private fun startSpeechRecognition() {
+    // Create the custom dialog
+    val dialog = Dialog(context)
+    dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+    dialog.setContentView(R.layout.dialog_custom_mic)
+
+    // Customize the dialog (if needed)
+    val micImageView: ImageView = dialog.findViewById(R.id.imgMicIcon)
+    val promptTextView: TextView = dialog.findViewById(R.id.tvPrompt)
+
+    // Display the dialog
+    dialog.show()
+
+    val speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context)
+    val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+        putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+        putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
+        putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak now")
+    }
+
+    speechRecognizer.setRecognitionListener(object : RecognitionListener {
+        override fun onReadyForSpeech(params: Bundle?) {
+            // Ready to receive speech
+        }
+
+        override fun onBeginningOfSpeech() {
+            // User has started speaking
+        }
+
+        override fun onRmsChanged(rmsdB: Float) {
+            // Sound level changed
+        }
+
+        override fun onBufferReceived(buffer: ByteArray?) {
+            // Buffer received
+        }
+
+        override fun onEndOfSpeech() {
+            // User has finished speaking
+            dialog.dismiss() // Dismiss the dialog once speech is done
+        }
+
+        override fun onError(error: Int) {
+            // Handle error
+            dialog.dismiss() // Dismiss the dialog on error
+        }
+
+        override fun onResults(results: Bundle?) {
+            results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.let { result ->
+                val spokenText = result[0]
+                // Log the spoken text
+                Log.d("SpeechRecognizerResult", "Spoken Text: $spokenText")
+                saveRecentSearches(spokenText)
+
+                // Trigger the done action with spoken text
+                val action = (this@AtomicSearchMoleculeListFragment.pageData as? AtomicSearchListMoleculePageModel)?.searchDoneAction
+                action?.analyticsData?.put(KEY_SEARCH_TERM, spokenText)
+                Log.d("SearchAction", "Executing search for: $spokenText")
+
+                // Set request parameters
+                action?.let { actionModel ->
+                    val requestParams = hashMapOf<String, Any>(
+                        "searchInput" to spokenText,
+                        "currentPage" to "Done"
+                    )
+                    // Execute the action to trigger the search
+                    executeAction(actionModel, true, requestParams)
+                }
+            }
+            dialog.dismiss() // Dismiss the dialog after results are processed
+        }
+
+        override fun onPartialResults(partialResults: Bundle?) {
+            // Handle partial results
+        }
+
+
+
+
+        override fun onEvent(eventType: Int, params: Bundle?) {
+            // Handle events
+        }
+    })
+
+    try {
+        speechRecognizer.startListening(intent)
+    } catch (e: ActivityNotFoundException) {
+        // Handle the error (Toast, log, etc.)
+        dialog.dismiss() // Dismiss the dialog on exception
+    }
+}
+
+
+<!-- dialog_custom_mic.xml -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@drawable/dialog_background">
+
+    <ImageView
+        android:id="@+id/imgMicIcon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_mic_custom"
+        android:contentDescription="Mic Icon"
+        android:layout_gravity="center" />
+
+    <TextView
+        android:id="@+id/tvPrompt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Listening..."
+        android:textSize="18sp"
+        android:textColor="@android:color/black"
+        android:layout_marginTop="8dp"
+        android:layout_gravity="center" />
+</LinearLayout>
