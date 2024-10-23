@@ -1,0 +1,194 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@drawable/dialog_background_rounded"
+    android:layout_gravity="bottom">
+
+    <!-- Mic Icon -->
+    <ImageView
+        android:id="@+id/imgMicIcon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_micropho"
+        android:contentDescription="Mic Icon"
+        android:layout_gravity="center" />
+
+    <!-- Prompt Text (Listening...) -->
+    <TextView
+        android:id="@+id/tvPrompt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Listening..."
+        android:textSize="18sp"
+        android:textColor="@android:color/black"
+        android:textStyle="italic"
+        android:layout_marginTop="8dp"
+        android:layout_gravity="center"
+        android:visibility="gone" />
+
+    <!-- Recognized Speech Text -->
+    <TextView
+        android:id="@+id/tvSpokenText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Recognized speech will appear here"
+        android:textSize="16sp"
+        android:textColor="@android:color/black"
+        android:layout_marginTop="8dp"
+        android:gravity="center"
+        android:visibility="gone" />
+
+    <!-- Buttons for Proceed and Try Again -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginTop="16dp">
+
+        <!-- Proceed Button -->
+        <Button
+            android:id="@+id/btnProceed"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Proceed"
+            android:enabled="false" />
+
+        <!-- Try Again Button -->
+        <Button
+            android:id="@+id/btnTryAgain"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Try Again"
+            android:layout_marginStart="16dp"
+            android:enabled="false" />
+    </LinearLayout>
+
+</LinearLayout>
+
+
+private fun startSpeechRecognition() {
+
+    context?.let { ctx ->
+        val dialog = Dialog(ctx)
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        dialog.setContentView(R.layout.dialog_custom_mic)
+
+        val window = dialog.window
+        window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        window?.setGravity(Gravity.BOTTOM)
+        window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+        val micImageView: ImageView = dialog.findViewById(R.id.imgMicIcon)
+        val promptTextView: TextView = dialog.findViewById(R.id.tvPrompt)
+        val spokenTextView: TextView = dialog.findViewById(R.id.tvSpokenText)
+        val btnProceed: Button = dialog.findViewById(R.id.btnProceed)
+        val btnTryAgain: Button = dialog.findViewById(R.id.btnTryAgain)
+
+        dialog.show()
+
+        val speechRecognizer = SpeechRecognizer.createSpeechRecognizer(ctx)
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
+            putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak now")
+        }
+
+        var recognizedText: String? = null
+
+        dialog.setOnDismissListener {
+            speechRecognizer.stopListening()
+        }
+
+        speechRecognizer.setRecognitionListener(object : RecognitionListener {
+            override fun onReadyForSpeech(params: Bundle?) {
+                // Ready to receive speech
+            }
+
+            override fun onBeginningOfSpeech() {
+                // User has started speaking
+            }
+
+            override fun onRmsChanged(rmsdB: Float) {
+                // Sound level changed
+            }
+
+            override fun onBufferReceived(buffer: ByteArray?) {
+                // Buffer received
+            }
+
+            override fun onEndOfSpeech() {
+                // User has finished speaking
+            }
+
+            override fun onError(error: Int) {
+                // Handle error and dismiss the dialog
+                dialog.dismiss()
+            }
+
+            override fun onResults(results: Bundle?) {
+                results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.let { result ->
+                    recognizedText = result[0]
+                    spokenTextView.visibility = View.VISIBLE
+                    spokenTextView.text = recognizedText
+
+                    micImageView.visibility = View.VISIBLE
+
+                    // Enable the buttons now that we have results
+                    btnProceed.isEnabled = true
+                    btnTryAgain.isEnabled = true
+                }
+            }
+
+            override fun onPartialResults(partialResults: Bundle?) {
+                // Handle partial results
+            }
+
+            override fun onEvent(eventType: Int, params: Bundle?) {
+                // Handle events
+            }
+        })
+
+        // Start listening when the dialog is shown
+        speechRecognizer.startListening(intent)
+
+        // Handle "Proceed" button click
+        btnProceed.setOnClickListener {
+            recognizedText?.let { spokenText ->
+                // Trigger the done action with spoken text
+                val action = (this@AtomicSearchMoleculeListFragment.pageData as? AtomicSearchListMoleculePageModel)?.searchDoneAction
+                action?.analyticsData?.put(KEY_SEARCH_TERM, spokenText)
+                Log.d("SearchAction", "Executing search for: $spokenText")
+
+                // Set request parameters
+                action?.let { actionModel ->
+                    val requestParams = hashMapOf<String, Any>(
+                        "searchInput" to spokenText,
+                        "currentPage" to "Done"
+                    )
+                    // Execute the action to trigger the search
+                    executeAction(actionModel, true, requestParams)
+                }
+
+                dialog.dismiss()
+            }
+        }
+
+        // Handle "Try Again" button click
+        btnTryAgain.setOnClickListener {
+            recognizedText = null
+            spokenTextView.visibility = View.GONE
+            micImageView.visibility = View.VISIBLE
+
+            // Restart listening
+            speechRecognizer.startListening(intent)
+        }
+
+        // Initially disable the buttons until speech is recognized
+        btnProceed.isEnabled = false
+        btnTryAgain.isEnabled = false
+    }
+}
+
