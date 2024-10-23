@@ -1,0 +1,50 @@
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center"
+    android:layout_marginTop="16dp">
+
+    <!-- Proceed ImageView (Button replacement) -->
+    <ImageView
+        android:id="@+id/imgProceed"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_proceed"  <!-- Replace with your drawable icon -->
+        android:contentDescription="Proceed"
+        android:layout_gravity="center" />
+
+    <!-- Try Again ImageView (Button replacement) -->
+    <ImageView
+        android:id="@+id/imgTryAgain"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_try_again"  <!-- Replace with your drawable icon -->
+        android:contentDescription="Try Again"
+        android:layout_marginStart="16dp"
+        android:layout_gravity="center" />
+</LinearLayout>
+
+
+val imgProceed: ImageView = dialog.findViewById(R.id.imgProceed)
+val imgTryAgain: ImageView = dialog.findViewById(R.id.imgTryAgain)
+
+
+imgProceed.setOnClickListener {
+    // User clicked Proceed, trigger the done action
+    val action = (this@AtomicSearchMoleculeListFragment.pageData as? AtomicSearchListMoleculePageModel)?.searchDoneAction
+    action?.analyticsData?.put(KEY_SEARCH_TERM, spokenTextView.text.toString())
+
+    val requestParams = hashMapOf<String, Any>(
+        "searchInput" to spokenTextView.text.toString(),
+        "currentPage" to "Done"
+    )
+    executeAction(action, true, requestParams)
+
+    dialog.dismiss()
+}
+
+imgTryAgain.setOnClickListener {
+    // User clicked Try Again, start speech recognition again
+    speechRecognizer.startListening(intent)
+}
