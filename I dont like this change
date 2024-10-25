@@ -1,0 +1,165 @@
+import android.content.Context
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.util.AttributeSet
+import android.view.View
+
+class AmplitudeView @JvmOverloads constructor(
+    context: Context,
+    attrs: AttributeSet? = null,
+    defStyleAttr: Int = 0
+) : View(context, attrs, defStyleAttr) {
+
+    private val paint = Paint().apply {
+        color = Color.BLUE // Set any color for the amplitude bars
+        style = Paint.Style.FILL
+    }
+    
+    private var amplitude = 1f // Default amplitude
+    
+    fun setAmplitude(value: Float) {
+        amplitude = value
+        invalidate() // Redraw the view with the updated amplitude
+    }
+
+    override fun onDraw(canvas: Canvas) {
+        super.onDraw(canvas)
+        // Calculate the height based on the amplitude
+        val barHeight = height * amplitude / 10 // Scale amplitude to fit the view
+        val barWidth = width / 10f
+        
+        // Draw a series of bars representing sound waves
+        for (i in 0..9) {
+            val left = i * barWidth
+            val top = height / 2 - barHeight / 2
+            val right = left + barWidth - 10
+            val bottom = height / 2 + barHeight / 2
+            canvas.drawRect(left, top, right, bottom, paint)
+        }
+    }
+
+<com.yourpackage.AmplitudeView
+    android:id="@+id/amplitudeView"
+    android:layout_width="100dp"
+    android:layout_height="100dp"
+    android:layout_gravity="center"
+/>
+
+
+fun startSpeechRecognition(
+    context: Context?,
+    sharedPreferencesUtil: SharedPreferencesUtil?,
+    executeAction: (spokenText: String) -> Unit
+) {
+    context?.let { ctx ->
+        val dialog = Dialog(ctx)
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        dialog.setContentView(R.layout.dialog_custom_mic)
+
+        val window = dialog.window
+        window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        window?.setGravity(Gravity.BOTTOM)
+        window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+        val amplitudeView: AmplitudeView = dialog.findViewById(R.id.amplitudeView)
+        val promptTextView: TextView = dialog.findViewById(R.id.tvPrompt)
+        val spokenTextView: TextView = dialog.findViewById(R.id.tvSpokenText)
+        val btnProceed: ButtonView = dialog.findViewById(R.id.btnProceed)
+        val btnTryAgain: ButtonView = dialog.findViewById(R.id.btnTryAgain)
+
+        btnTryAgain.visibility = View.GONE
+        btnProceed.visibility = View.GONE
+
+        dialog.show()
+
+        val speechRecognizer = SpeechRecognizer.createSpeechRecognizer(ctx)
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
+            putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak now")
+        }
+
+        var recognizedText: String? = null
+
+        dialog.setOnDismissListener {
+            speechRecognizer.stopListening()
+        }
+
+        speechRecognizer.setRecognitionListener(object : RecognitionListener {
+            override fun onReadyForSpeech(params: Bundle?) {
+                // Start animating the amplitude view when ready for speech
+                amplitudeView.setAmplitude(1f)
+            }
+
+            override fun onBeginningOfSpeech() {
+                // User has started speaking, can start showing dynamic amplitude changes
+            }
+
+            override fun onRmsChanged(rmsdB: Float) {
+                // Animate the amplitude based on the RMS dB value (sound level)
+                val amplitude = Math.max(1f, rmsdB / 10f) // Normalize the value
+                amplitudeView.setAmplitude(amplitude)
+            }
+
+            override fun onBufferReceived(buffer: ByteArray?) {
+                // Buffer received
+            }
+
+            override fun onEndOfSpeech() {
+                // Stop the amplitude animation when user finishes speaking
+                amplitudeView.setAmplitude(1f)
+            }
+
+            override fun onError(error: Int) {
+                dialog.dismiss()
+            }
+
+            override fun onResults(results: Bundle?) {
+                results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.let { result ->
+                    recognizedText = result[0]
+                    spokenTextView.visibility = View.VISIBLE
+                    spokenTextView.text = recognizedText
+                    promptTextView.visibility = View.GONE
+
+                    btnTryAgain.visibility = View.VISIBLE
+                    btnProceed.visibility = View.VISIBLE
+
+                    // Enable the buttons now that we have results
+                    btnProceed.isEnabled = true
+                    btnTryAgain.isEnabled = true
+                }
+            }
+
+            override fun onPartialResults(partialResults: Bundle?) {}
+
+            override fun onEvent(eventType: Int, params: Bundle?) {}
+        })
+
+        speechRecognizer.startListening(intent)
+
+        btnProceed.setOnClickListener {
+            recognizedText?.let { spokenText ->
+                saveRecentSearches(sharedPreferencesUtil, spokenText)
+                executeAction(spokenText)
+            }
+            dialog.dismiss()
+        }
+
+        btnTryAgain.setOnClickListener {
+            recognizedText = null
+            spokenTextView.visibility = View.GONE
+            promptTextView.visibility = View.VISIBLE
+
+            btnTryAgain.visibility = View.GONE
+            btnProceed.visibility = View.GONE
+
+            speechRecognizer.startListening(intent)
+        }
+
+        btnProceed.isEnabled = false
+        btnTryAgain.isEnabled = false
+    }
+}
+
+}
