@@ -1,19 +1,23 @@
 <!-- dialog_bottom_right.xml -->
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:background="@android:color/white"
-    android:padding="16dp">
+    android:padding="16dp"
+    android:orientation="vertical">
 
-    <Button
-        android:id="@+id/btn_close_dialog"
+    <!-- Close TextView in the top-right corner -->
+    <TextView
+        android:id="@+id/tv_close_dialog"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Close"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentTop="true"/>
-</RelativeLayout>
+        android:text="X"
+        android:textSize="18sp"
+        android:textColor="@android:color/black"
+        android:layout_gravity="end"/>
+</LinearLayout>
+
 
 
 // BottomRightDialog.kt
