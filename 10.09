@@ -1,0 +1,76 @@
+<!-- dialog_bottom_right.xml -->
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="300dp"       <!-- Adjust the width as needed -->
+    android:layout_height="200dp"      <!-- Adjust the height as needed -->
+    android:background="@android:color/white"
+    android:padding="16dp">
+
+    <!-- Close TextView in the top-right corner -->
+    <TextView
+        android:id="@+id/tv_close_dialog"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="X"
+        android:textSize="18sp"
+        android:textColor="@android:color/black"
+        android:layout_gravity="end|top"/>
+</FrameLayout>
+
+
+// BottomRightDialog.kt
+import android.app.Dialog
+import android.content.Context
+import android.os.Handler
+import android.os.Looper
+import android.view.Gravity
+import android.view.WindowManager
+import android.widget.TextView
+import com.yourpackage.R
+
+class BottomRightDialog(context: Context) : Dialog(context) {
+
+    init {
+        setContentView(R.layout.dialog_bottom_right)
+        setCancelable(true)
+
+        // Set dialog position to the bottom right
+        window?.apply {
+            val params = attributes
+            params.gravity = Gravity.BOTTOM or Gravity.END
+            attributes = params
+            setLayout(WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT)
+        }
+
+        // Close dialog on "X" click
+        findViewById<TextView>(R.id.tv_close_dialog).setOnClickListener {
+            dismiss()
+        }
+    }
+
+    fun showWithDelay(delayMillis: Long) {
+        Handler(Looper.getMainLooper()).postDelayed({
+            show()
+        }, delayMillis)
+    }
+}
+
+
+// SetUpActivity.java
+
+public class SetUpActivity extends AppCompatActivity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_setup);
+
+        // Show dialog with a 2-second delay
+        showBottomRightDialogWithDelay(2000);  // Delay in milliseconds
+    }
+
+    private void showBottomRightDialogWithDelay(long delayMillis) {
+        BottomRightDialog dialog = new BottomRightDialog(this);
+        dialog.showWithDelay(delayMillis);
+    }
+}
