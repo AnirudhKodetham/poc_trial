@@ -1,0 +1,64 @@
+<!-- dialog_bottom_right.xml -->
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="@android:color/white"
+    android:padding="16dp">
+
+    <Button
+        android:id="@+id/btn_close_dialog"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Close"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentTop="true"/>
+</RelativeLayout>
+
+
+// BottomRightDialog.kt
+import android.app.Dialog
+import android.content.Context
+import android.view.Gravity
+import android.view.WindowManager
+import com.yourpackage.R
+
+class BottomRightDialog(context: Context) : Dialog(context) {
+
+    init {
+        setContentView(R.layout.dialog_bottom_right)
+        setCancelable(true)
+
+        // Set dialog position to the bottom right
+        window?.apply {
+            val params = attributes
+            params.gravity = Gravity.BOTTOM or Gravity.END
+            attributes = params
+            setLayout(WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT)
+        }
+
+        // Close button functionality
+        findViewById<Button>(R.id.btn_close_dialog).setOnClickListener {
+            dismiss()
+        }
+    }
+}
+
+
+// SetUpActivity.java
+
+public class SetUpActivity extends AppCompatActivity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_setup);
+
+        // Show dialog when the app launches
+        showBottomRightDialog();
+    }
+
+    private void showBottomRightDialog() {
+        new BottomRightDialog(this).show();
+    }
+}
