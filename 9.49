@@ -1,0 +1,28 @@
+// BottomRightDialog.kt
+import android.app.Dialog
+import android.content.Context
+import android.view.Gravity
+import android.view.WindowManager
+import android.widget.TextView
+import com.yourpackage.R
+
+class BottomRightDialog(context: Context) : Dialog(context) {
+
+    init {
+        setContentView(R.layout.dialog_bottom_right)
+        setCancelable(true)
+
+        // Set dialog position to the bottom right
+        window?.apply {
+            val params = attributes
+            params.gravity = Gravity.BOTTOM or Gravity.END
+            attributes = params
+            setLayout(WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT)
+        }
+
+        // Close dialog on "X" click
+        findViewById<TextView>(R.id.tv_close_dialog).setOnClickListener {
+            dismiss()
+        }
+    }
+}
