@@ -1,0 +1,301 @@
+package com.example.myapplication
+
+
+import android.os.Bundle
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.TextWatcher
+import android.text.Editable
+import android.text.style.StyleSpan
+import android.widget.EditText
+import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import org.json.JSONObject
+import org.json.JSONArray
+import java.util.ArrayList
+
+class MainActivity : AppCompatActivity() {
+
+    private lateinit var searchBar: EditText
+    private lateinit var recyclerView: RecyclerView
+    private lateinit var adapter: SearchAdapter
+    private val itemList = mutableListOf<String>() // Initialize an empty list for dynamic data
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        searchBar = findViewById(R.id.search_bar)
+        recyclerView = findViewById(R.id.recycler_view)
+        recyclerView.layoutManager = LinearLayoutManager(this)
+
+        // Parse the JSON response and populate the itemList
+        parseJsonResponse(jsonResponse)
+
+        adapter = SearchAdapter(itemList)
+        recyclerView.adapter = adapter
+        recyclerView.visibility = RecyclerView.GONE // Initially hide the list
+
+        // Set up TextWatcher for search functionality
+        searchBar.addTextChangedListener(object : TextWatcher {
+            override fun afterTextChanged(s: Editable?) {
+                val query = s.toString()
+                if (query.isNotEmpty()) {
+                    adapter.filter(query)
+                    recyclerView.visibility = RecyclerView.VISIBLE
+                } else {
+                    recyclerView.visibility = RecyclerView.GONE
+                    adapter.clearList()
+                }
+            }
+
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+        })
+    }
+
+    // Function to parse JSON and populate itemList
+    private fun parseJsonResponse(jsonString: String) {
+        try {
+            val jsonObject = JSONObject(jsonString)
+            val moleculesArray = jsonObject.getJSONObject("Page").getJSONArray("molecules")
+
+            // Clear any existing items in the list
+            itemList.clear()
+
+            // Iterate over molecules and extract the "text" for each item
+            for (i in 0 until moleculesArray.length()) {
+                val molecule = moleculesArray.getJSONObject(i)
+                val text = molecule.getJSONObject("molecule").getString("text")
+                itemList.add(text)
+            }
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    // Sample JSON response (normally this would come from a network call)
+    private val jsonResponse = """
+        {
+  "ResponseInfo": {
+    "timeStamp": "882",
+    "correlationId": "7841e76d-620b-45b5-8741-9cab6fa8a930-16824125",
+    "errorCode": "00",
+    "errorMessage": "SUCCESS",
+    "message": "SUCCESS",
+    "type": "Success",
+    "code": "00",
+    "userMessage": "0",
+    "topAlertTime": 0
+  },
+  "Page": {
+    "template": "globalSearchList",
+    "analyticsData": {
+      "vzwi.mvmapp.flowType": "Search",
+      "vzwi.mvmapp.pageName": "/mf/more/contactus/findastore",
+      "vzwi.mvmapp.pageType": "globalSearchResult",
+      "vzwi.mvmapp.flowName": "discover"
+    },
+    "molecules": [
+      {
+        "topPadding": 12,
+        "moleculeName": "listItem",
+        "line": {
+          "type": "none"
+        },
+        "action": {
+          "actionType": "openPage",
+          "pageType": "webview",
+          "appContext": "mobile/nsa/nos/gw/launchapp/l2",
+          "extraParameters": {
+            "browserUrl": "https://www.verizon.com/onesearch/search?q=iPhone&lid=sayt&sayt=iph*&src=wireless",
+            "screenHeading": "Search"
+          }
+        },
+        "bottomPadding": 12,
+        "molecule": {
+          "moleculeName": "label",
+          "text": "iPhone",
+          "fontStyle": "RegularBodyLarge"
+        },
+        "accessibilityText": "iPhone",
+        "hideArrow": true
+      },
+      {
+        "topPadding": 12,
+        "moleculeName": "listItem",
+        "line": {
+          "type": "none"
+        },
+        "action": {
+          "actionType": "openPage",
+          "pageType": "webview",
+          "appContext": "mobile/nsa/nos/gw/launchapp/l2",
+          "extraParameters": {
+            "browserUrl": "https://www.verizon.com/onesearch/search?q=iPhone 16&lid=sayt&sayt=iph*&src=wireless",
+            "screenHeading": "Search"
+          }
+        },
+        "bottomPadding": 12,
+        "molecule": {
+          "moleculeName": "label",
+          "text": "iPhone 16",
+          "fontStyle": "RegularBodyLarge"
+        },
+        "accessibilityText": "iPhone 16",
+        "hideArrow": true
+      },
+      {
+        "topPadding": 12,
+        "moleculeName": "listItem",
+        "line": {
+          "type": "none"
+        },
+        "action": {
+          "actionType": "openPage",
+          "pageType": "webview",
+          "appContext": "mobile/nsa/nos/gw/launchapp/l2",
+          "extraParameters": {
+            "browserUrl": "https://www.verizon.com/onesearch/search?q=iPhone 16 Pro&lid=sayt&sayt=iph*&src=wireless",
+            "screenHeading": "Search"
+          }
+        },
+        "bottomPadding": 12,
+        "molecule": {
+          "moleculeName": "label",
+          "text": "iPhone 16 Pro",
+          "fontStyle": "RegularBodyLarge"
+        },
+        "accessibilityText": "iPhone 16 Pro",
+        "hideArrow": true
+      },
+      {
+        "topPadding": 12,
+        "moleculeName": "listItem",
+        "line": {
+          "type": "none"
+        },
+        "action": {
+          "actionType": "openPage",
+          "pageType": "webview",
+          "appContext": "mobile/nsa/nos/gw/launchapp/l2",
+          "extraParameters": {
+            "browserUrl": "https://www.verizon.com/onesearch/search?q=iPhone 16 Pro Max&lid=sayt&sayt=iph*&src=wireless",
+            "screenHeading": "Search"
+          }
+        },
+        "bottomPadding": 12,
+        "molecule": {
+          "moleculeName": "label",
+          "text": "iPhone 16 Pro Max",
+          "fontStyle": "RegularBodyLarge"
+        },
+        "accessibilityText": "iPhone 16 Pro Max",
+        "hideArrow": true
+      },
+      {
+        "topPadding": 12,
+        "moleculeName": "listItem",
+        "line": {
+          "type": "none"
+        },
+        "action": {
+          "actionType": "openPage",
+          "pageType": "webview",
+          "appContext": "mobile/nsa/nos/gw/launchapp/l2",
+          "extraParameters": {
+            "browserUrl": "https://www.verizon.com/onesearch/search?q=iPhone 16 Plus&lid=sayt&sayt=iph*&src=wireless",
+            "screenHeading": "Search"
+          }
+        },
+        "bottomPadding": 12,
+        "molecule": {
+          "moleculeName": "label",
+          "text": "iPhone 16 Plus",
+          "fontStyle": "RegularBodyLarge"
+        },
+        "accessibilityText": "iPhone 16 Plus",
+        "hideArrow": true
+      },
+      {
+        "topPadding": 12,
+        "moleculeName": "listItem",
+        "line": {
+          "type": "none"
+        },
+        "action": {
+          "actionType": "openPage",
+          "pageType": "webview",
+          "appContext": "mobile/nsa/nos/gw/launchapp/l2",
+          "extraParameters": {
+            "browserUrl": "https://www.verizon.com/onesearch/search?q=iPhone 15&lid=sayt&sayt=iph*&src=wireless",
+            "screenHeading": "Search"
+          }
+        },
+        "bottomPadding": 12,
+        "molecule": {
+          "moleculeName": "label",
+          "text": "iPhone 15",
+          "fontStyle": "RegularBodyLarge"
+        },
+        "accessibilityText": "iPhone 15",
+        "hideArrow": true
+      },
+      {
+        "topPadding": 12,
+        "moleculeName": "listItem",
+        "line": {
+          "type": "none"
+        },
+        "action": {
+          "actionType": "openPage",
+          "pageType": "webview",
+          "appContext": "mobile/nsa/nos/gw/launchapp/l2",
+          "extraParameters": {
+            "browserUrl": "https://www.verizon.com/onesearch/search?q=iPhone 15 Pro&lid=sayt&sayt=iph*&src=wireless",
+            "screenHeading": "Search"
+          }
+        },
+        "bottomPadding": 12,
+        "molecule": {
+          "moleculeName": "label",
+          "text": "iPhone 15 Pro",
+          "fontStyle": "RegularBodyLarge"
+        },
+        "accessibilityText": "iPhone 15 Pro",
+        "hideArrow": true
+      },
+      {
+        "topPadding": 12,
+        "moleculeName": "listItem",
+        "line": {
+          "type": "none"
+        },
+        "action": {
+          "actionType": "openPage",
+          "pageType": "webview",
+          "appContext": "mobile/nsa/nos/gw/launchapp/l2",
+          "extraParameters": {
+            "browserUrl": "https://www.verizon.com/onesearch/search?q=Apple&lid=sayt&sayt=iph*&src=wireless",
+            "screenHeading": "Search"
+          }
+        },
+        "bottomPadding": 12,
+        "molecule": {
+          "moleculeName": "label",
+          "text": "Apple",
+          "fontStyle": "RegularBodyLarge"
+        },
+        "accessibilityText": "Apple",
+        "hideArrow": true
+      }
+    ],
+    "pageType": "globalSearch",
+    "tabBarHidden": false,
+    "cache": false
+  }
+}
+    """
+}
