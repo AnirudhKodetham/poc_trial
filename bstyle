@@ -1,0 +1,25 @@
+view
+    model.bStyle?.let { bStyle ->
+        if (Utils.isValidColorCode(bStyle.textColor)) {
+            setTextColor(Utils.getColor(context, bStyle.textColor, ContextCompat.getColor(context, R.color.vds_color_palette_black)))
+        }
+        if (bStyle.textSize != null) {
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, bStyle.textSize.toFloat())
+        }
+    }
+
+model
+
+data class LabelAtomModel(
+    val text: String? = null,
+    val textColor: String? = null,
+    val textSize: Int? = null,
+    val bStyle: BStyle? = null, // New property
+    val visibility: Int = View.VISIBLE,
+    // Other existing properties...
+)
+
+data class BStyle(
+    val textColor: String? = null,
+    val textSize: Int? = null
+)
