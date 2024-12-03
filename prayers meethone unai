@@ -1,0 +1,16 @@
+private var baseActivity: BaseActivity? = null
+
+private fun getBaseActivity(): BaseActivity? {
+    return if (context is BaseActivity) {
+        context as BaseActivity
+    } else {
+        null
+    }
+}
+
+
+val pageTypeIntent = getBaseActivity()?.getCurrentFragment()?.getPageType() ?: ""
+val requestParams = hashMapOf<String, Any>(
+    "searchInput" to query,
+    "pageTypeIntent" to pageTypeIntent
+)
