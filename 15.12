@@ -1,0 +1,42 @@
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
+
+class SearchHighlightLabelView : LabelAtomView {
+    constructor(mContext: Context) : super(mContext)
+    constructor(mContext: Context, attribute: AttributeSet) : super(mContext, attribute)
+    constructor(mContext: Context, attribute: AttributeSet, style: Int) : super(
+        mContext,
+        attribute,
+        style
+    )
+
+    init {
+        // Observe the query and update the text in real time
+        lifecycleScope.launch {
+            SearchQueryManager.currentQuery.collect { query ->
+                applyHighlight(query)
+            }
+        }
+    }
+
+    private fun applyHighlight(query: String) {
+        val originalText = this.text.toString()
+        if (query.isNotEmpty()) {
+            val spannable = SpannableString(originalText)
+            val startIndex = originalText.lowercase().indexOf(query.lowercase())
+            if (startIndex >= 0) {
+                val endIndex = startIndex + query.length
+                spannable.setSpan(
+                    StyleSpan(android.graphics.Typeface.BOLD),
+                    startIndex,
+                    endIndex,
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
+            }
+            this.text = spannable
+        } else {
+            this.text = originalText // Reset to original text
+        }
+    }
+}
