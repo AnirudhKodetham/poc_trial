@@ -1,3 +1,5 @@
+package com.vzw.atomic.views.molecules
+
 import android.content.Context
 import android.text.Spannable
 import android.text.SpannableString
@@ -10,7 +12,6 @@ import com.vzw.hss.myverizon.atomic.models.atoms.LabelAtomModel
 import com.vzw.hss.myverizon.atomic.views.atoms.LabelAtomView
 
 class SearchHighlightLabelView : LabelAtomView {
-
     private val viewScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     constructor(mContext: Context) : super(mContext)
@@ -25,18 +26,24 @@ class SearchHighlightLabelView : LabelAtomView {
         observeSearchQuery()
     }
 
+    // This function will observe query changes and update the UI accordingly
     private fun observeSearchQuery() {
         viewScope.launch {
+            // Collecting the current query from the SearchQueryManager
             SearchQueryManager.currentQuery.collect { query ->
-                applyHighlight(query)
+                // Reapply the style with the current query
+                applyStyle(query)
             }
         }
     }
 
-    private fun applyHighlight(query: String) {
+    // Apply the style to the text based on the search query
+    private fun applyStyle(query: String) {
         val originalText = this.text.toString()
         if (query.isNotEmpty()) {
             val spannable = SpannableString(originalText)
+
+            // Find the index of the query in the original text (case insensitive)
             val startIndex = originalText.lowercase().indexOf(query.lowercase())
             if (startIndex >= 0) {
                 val endIndex = startIndex + query.length
@@ -47,18 +54,18 @@ class SearchHighlightLabelView : LabelAtomView {
                     Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
                 )
             }
+
+            // Set the formatted text to the view
             this.text = spannable
         } else {
-            this.text = originalText // Reset to original text
+            // If no query, reset to original text
+            this.text = originalText
         }
     }
 
+    // Cancel coroutines when the view is detached to avoid memory leaks
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
         viewScope.cancel() // Cancel coroutines when the view is detached
-    }
-
-    override fun applyStyle(model: LabelAtomModel) {
-        super.applyStyle(model)
     }
 }
