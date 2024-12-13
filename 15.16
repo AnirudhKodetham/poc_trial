@@ -1,0 +1,64 @@
+import android.content.Context
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.style.StyleSpan
+import android.util.AttributeSet
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.collect
+import com.vzw.atomic.utils.SearchQueryManager
+import com.vzw.hss.myverizon.atomic.models.atoms.LabelAtomModel
+import com.vzw.hss.myverizon.atomic.views.atoms.LabelAtomView
+
+class SearchHighlightLabelView : LabelAtomView {
+
+    private val viewScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
+    constructor(mContext: Context) : super(mContext)
+    constructor(mContext: Context, attribute: AttributeSet) : super(mContext, attribute)
+    constructor(mContext: Context, attribute: AttributeSet, style: Int) : super(
+        mContext,
+        attribute,
+        style
+    )
+
+    init {
+        observeSearchQuery()
+    }
+
+    private fun observeSearchQuery() {
+        viewScope.launch {
+            SearchQueryManager.currentQuery.collect { query ->
+                applyHighlight(query)
+            }
+        }
+    }
+
+    private fun applyHighlight(query: String) {
+        val originalText = this.text.toString()
+        if (query.isNotEmpty()) {
+            val spannable = SpannableString(originalText)
+            val startIndex = originalText.lowercase().indexOf(query.lowercase())
+            if (startIndex >= 0) {
+                val endIndex = startIndex + query.length
+                spannable.setSpan(
+                    StyleSpan(android.graphics.Typeface.BOLD),
+                    startIndex,
+                    endIndex,
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
+            }
+            this.text = spannable
+        } else {
+            this.text = originalText // Reset to original text
+        }
+    }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        viewScope.cancel() // Cancel coroutines when the view is detached
+    }
+
+    override fun applyStyle(model: LabelAtomModel) {
+        super.applyStyle(model)
+    }
+}
