@@ -1,0 +1,88 @@
+fun saveRecentSearch(
+    sharedPreferencesUtil: SharedPreferencesUtil?,
+    query: String,
+    maxQueryCount: Int
+) {
+    if (query.isEmpty()) return
+
+    val searchData = sharedPreferencesUtil?.nSearchList
+    val updatedSearchData = StringBuilder(query)
+
+    searchData?.split(",")
+        ?.filter { it.isNotEmpty() && it != query }
+        ?.forEach { existingQuery ->
+            updatedSearchData.append(",$existingQuery")
+        }
+
+    val limitedSearchData = updatedSearchData.toString()
+        .split(",")
+        .take(maxQueryCount)
+        .joinToString(",")
+    sharedPreferencesUtil?.nSearchList = "$limitedSearchData,"
+}
+
+fun deleteRecentSearchByQuery(
+    sharedPreferencesUtil: SharedPreferencesUtil?,
+    query: String
+): Boolean {
+    val searchData = sharedPreferencesUtil?.nSearchList
+    val updatedSearchData = searchData
+        ?.split(",")
+        ?.filter { it.isNotEmpty() && it != query }
+        ?.joinToString(",")
+    sharedPreferencesUtil?.nSearchList = updatedSearchData?.plus(",")
+    return true
+}
+
+
+protected void processEvent(ResponseHandlingEvent event) {
+    // Existing code...
+    else if (event.getAction() == ResponseHandlingEvent.Action.SAVE_SEARCH_HISTORY) {
+        if (event.getExtraInfo() instanceof SaveSearchQueryAction action) {
+            if (action.getAction() != null && action.getAction().equals("save")) {
+                SearchUtil.Companion.saveRecentSearches(sharedPreferencesUtil, action);
+            } else {
+                SearchUtil.Companion.deleteRecentSearch(sharedPreferencesUtil, action);
+            }
+        }
+    }
+    // New addition: Manually save the recent search on performDoneApiCall
+    else if (event.getAction() == ResponseHandlingEvent.Action.ADD_SEARCH_HISTORY) {
+        if (event.getExtraInfo() instanceof SaveSearchQueryAction action) {
+            SearchUtil.Companion.saveRecentSearch(
+                sharedPreferencesUtil,
+                action.getExtraParams().get("searchInput"),
+                action.getMaxQueryCount()
+            );
+        }
+    }
+}
+
+
+private fun performDoneApiCall(query: String) {
+    iv_assistant?.visibility = View.VISIBLE
+    searchResultsView?.hideKeyboard()
+    clearSearchFocus()
+    globalSearchViewPresenter?.stopSearchRequest()
+    searchJob?.cancel()
+    scope.cancel()
+    onSearchListener?.hideSearchList(true)
+    onSearchListener?.showOrHideOverlay(false, globalSearchListTemplateModel)
+    isSearchActive = false
+
+    // Save the query to recent searches
+    SearchUtil.saveRecentSearch(sharedPreferencesUtil, query, MAX_RECENT_SEARCHES)
+
+    val requestParams = hashMapOf<String, Any>(
+        "searchInput" to query,
+        "searchPageType" to (baseActivity?.currentFragment?.pageType ?: "")
+    )
+    searchDoneAction?.let {
+        globalSearchViewPresenter?.executeSearchDoneAction(it, requestParams)
+    }
+}
+
+// Handle delete action for the close button in the search results
+private fun handleDeleteAction(query: String) {
+    SearchUtil.deleteRecentSearchByQuery(sharedPreferencesUtil, query)
+}
