@@ -1,0 +1,57 @@
+class SearchUtil {
+    companion object {
+        fun handleSearchAction(
+            actionType: String,
+            extraParams: Map<String, String>,
+            sharedPreferencesUtil: SharedPreferencesUtil?,
+            onSearchTriggered: (query: String) -> Unit,
+            onReloadSearchHistory: () -> Unit
+        ) {
+            when (actionType) {
+                "triggerSearch" -> {
+                    val query = extraParams["searchInput"] ?: return
+                    onSearchTriggered(query) // Call the callback for performDoneApiCall
+                }
+                "deleteSearch" -> {
+                    val query = extraParams["searchInput"] ?: return
+                    deleteRecentSearch(sharedPreferencesUtil, SaveSearchQueryAction(extraParams))
+                    onReloadSearchHistory() // Call the callback to refresh search history
+                }
+            }
+        }
+
+        fun deleteRecentSearch(
+            sharedPreferencesUtil: SharedPreferencesUtil?,
+            action: SaveSearchQueryAction
+        ): Boolean {
+            val searchText = queryText(action) ?: return false
+
+            val searchData = sharedPreferencesUtil?.nSearchList
+            val updatedSearchData = searchData
+                ?.split(",")
+                ?.filter { it.isNotEmpty() && it != searchText }
+                ?.joinToString(",")
+
+            sharedPreferencesUtil?.nSearchList = updatedSearchData?.plus(",")
+            return true
+        }
+
+        // Other existing utility functions...
+    }
+}
+
+
+private fun handleSearchAction(actionType: String, extraParams: Map<String, String>) {
+    SearchUtil.handleSearchAction(
+        actionType = actionType,
+        extraParams = extraParams,
+        sharedPreferencesUtil = sharedPreferencesUtil,
+        onSearchTriggered = { query ->
+            performDoneApiCall(query)
+        },
+        onReloadSearchHistory = {
+            reloadSearchHistory()
+        }
+    )
+}
+
