@@ -55,3 +55,18 @@ private fun handleSearchAction(actionType: String, extraParams: Map<String, Stri
     )
 }
 
+private fun handleSearchAction(actionType: String, extraParams: Map<String, String>) {
+    when (actionType) {
+        "triggerSearch" -> {
+            val query = extraParams["searchInput"] ?: return
+            performDoneApiCall(query) // Perform search
+        }
+        "deleteSearch" -> {
+            val query = extraParams["searchInput"] ?: return
+            SearchUtil.deleteRecentSearch(sharedPreferencesUtil, SaveSearchQueryAction(extraParams))
+            reloadSearchHistory() // Refresh the recent search list
+        }
+    }
+}
+
+
