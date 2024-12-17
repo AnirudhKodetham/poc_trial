@@ -86,3 +86,19 @@ private fun performDoneApiCall(query: String) {
 private fun handleDeleteAction(query: String) {
     SearchUtil.deleteRecentSearchByQuery(sharedPreferencesUtil, query)
 }
+
+
+protected void processEvent(ResponseHandlingEvent event) {
+    // Existing code...
+    else if (event.getAction() == ResponseHandlingEvent.Action.SAVE_SEARCH_HISTORY) {
+        if (event.getExtraInfo() instanceof SaveSearchQueryAction action) {
+            if (action.getAction() != null && action.getAction().equals("save")) {
+                SearchUtil.Companion.saveRecentSearches(sharedPreferencesUtil, action);
+            } else if (action.getAction().equals("delete")) {
+                // Trigger delete for close button
+                String query = action.getExtraParams().get("searchInput");
+                SearchUtil.Companion.deleteRecentSearchByQuery(sharedPreferencesUtil, query);
+            }
+        }
+    }
+}
