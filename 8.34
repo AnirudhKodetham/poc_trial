@@ -5,3 +5,21 @@
         }
         SearchUtil.saveRecentSearches(sharedPreferencesUtil, saveSearchAction)
     }
+
+
+    if (query.isNotEmpty()) {
+        val recentSearches = SearchUtil.getRecentSearches(sharedPreferencesUtil).toMutableList()
+
+        // Remove duplicate if it exists
+        recentSearches.remove(query)
+        // Add the new query at the top
+        recentSearches.add(0, query)
+        // Enforce max size limit (e.g., 10)
+        val maxQueryCount = 10
+        if (recentSearches.size > maxQueryCount) {
+            recentSearches.removeAt(recentSearches.size - 1)
+        }
+
+        // Save updated list back to SharedPreferences
+        SearchUtil.saveRecentSearches(sharedPreferencesUtil, recentSearches)
+    }
