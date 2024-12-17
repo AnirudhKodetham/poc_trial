@@ -1,0 +1,14 @@
+private fun setupRecentSearchClickListener() {
+    searchResultsView?.setOnItemClickListener { _, _, position, _ ->
+        val clickedQuery = searchResultsView?.adapter?.getItem(position) as? String
+        clickedQuery?.let {
+            performDoneApiCall(it)
+        }
+    }
+}
+
+
+    model.onClick = {
+        onClickAction(query)
+    }
+    return model
