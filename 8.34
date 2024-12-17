@@ -23,3 +23,33 @@
         // Save updated list back to SharedPreferences
         SearchUtil.saveRecentSearches(sharedPreferencesUtil, recentSearches)
     }
+
+
+
+fun saveRecentSearches(
+    sharedPreferencesUtil: SharedPreferencesUtil?,
+    query: String,
+    maxQueryCount: Int
+) {
+    if (query.isEmpty()) return
+
+    // Fetch current recent searches
+    val currentSearchData = sharedPreferencesUtil?.nSearchList ?: ""
+    val searchList = currentSearchData
+        .split(",")
+        .filter { it.isNotEmpty() && it != query } // Avoid duplicates and empty strings
+
+    // Add the new query at the top
+    val updatedSearchList = listOf(query) + searchList
+
+    // Limit to maxQueryCount
+    val limitedSearchData = updatedSearchList
+        .take(maxQueryCount)
+        .joinToString(",")
+
+    // Save back to SharedPreferences
+    sharedPreferencesUtil?.nSearchList = "$limitedSearchData,"
+}
+
+
+saveRecentSearches(sharedPreferencesUtil, query, MAX_RECENT_SEARCHES)
