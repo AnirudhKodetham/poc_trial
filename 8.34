@@ -1,0 +1,5 @@
+    query.takeIf { it.isNotEmpty() }?.let { searchQuery ->
+        val extraParams = mapOf("searchInput" to searchQuery)
+        val saveSearchAction = SaveSearchQueryAction(extraParams, "save", 10) // Use maxQueryCount as needed
+        SearchUtil.saveRecentSearches(sharedPreferencesUtil, saveSearchAction)
+    }
