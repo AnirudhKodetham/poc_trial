@@ -1,0 +1,41 @@
+fun saveRecentSearches(
+    sharedPreferencesUtil: SharedPreferencesUtil?,
+    action: SaveSearchQueryAction
+) {
+    val searchText = queryText(action) ?: return
+
+    // Fetch current search data
+    val searchData = sharedPreferencesUtil?.nSearchList
+    val searchList = searchData?.split(",")?.filter { it.isNotEmpty() }?.toMutableList() ?: mutableListOf()
+
+    // Remove the search term if it already exists to avoid duplicates
+    searchList.remove(searchText)
+
+    // Add the new search term to the top
+    searchList.add(0, searchText)
+
+    // Limit the list to the maximum allowed searches
+    val maxSearches = action.maxQueryCount
+    val limitedSearchData = searchList.take(maxSearches).joinToString(",")
+
+    // Save the updated search list
+    sharedPreferencesUtil?.nSearchList = "$limitedSearchData,"
+}
+
+fun deleteRecentSearch(
+    sharedPreferencesUtil: SharedPreferencesUtil?,
+    action: SaveSearchQueryAction
+): Boolean {
+    val searchText = queryText(action) ?: return false
+
+    // Fetch current search data
+    val searchData = sharedPreferencesUtil?.nSearchList
+    val updatedSearchData = searchData
+        ?.split(",")
+        ?.filter { it.isNotEmpty() && it != searchText } // Remove only the exact search term
+        ?.joinToString(",")
+
+    // Update the search list
+    sharedPreferencesUtil?.nSearchList = updatedSearchData?.plus(",")
+    return true
+}
