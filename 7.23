@@ -1,0 +1,83 @@
+override fun onFocusChange(view: View?, focus: Boolean) {
+    // Avoid handling focus change if a delete action was recently performed
+    if (focus && !isDeleteActionTriggered()) {
+        iv_hab_back?.visibility = View.VISIBLE
+        iv_assistant?.visibility = View.INVISIBLE
+        divider?.visibility = GONE
+
+        // Update background based on the "inverted" state
+        if (inverted) {
+            hab_content_view_root?.setBackgroundColor(
+                ContextCompat.getColor(this.context, R.color.black)
+            )
+            iv_hab_back?.setColorFilter(ContextCompat.getColor(this.context, R.color.white))
+        } else {
+            hab_content_view_root?.setBackgroundColor(
+                ContextCompat.getColor(this.context, R.color.white)
+            )
+            iv_hab_back?.setColorFilter(ContextCompat.getColor(this.context, R.color.black))
+        }
+
+        // Restart coroutine scope if needed
+        if (!scope.isActive) {
+            scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+            observerSearch()
+        }
+
+        // Activate search mode and show overlay
+        isSearchActive = true
+        onSearchListener?.showOrHideOverlay(
+            true,
+            globalSearchListTemplateModel = initialSearchTemplate()
+        )
+
+        // Perform API call if search field has text
+        searchResultsView?.text?.toString()?.let {
+            if (it.isNotEmpty()) {
+                performApiCall(it)
+            }
+        }
+    } else if (!focus) {
+        // Handle when focus is lost
+        isSearchActive = false
+        iv_hab_back?.visibility = View.GONE
+        divider?.visibility = VISIBLE
+    }
+}
+
+private var isDeleteAction = false
+
+// Call this method in your delete logic to set the delete state
+fun triggerDeleteAction() {
+    isDeleteAction = true
+
+    // Reset the state after a short delay
+    CoroutineScope(Dispatchers.Main).launch {
+        delay(200) // Adjust the delay as necessary
+        isDeleteAction = false
+    }
+}
+
+// Check if a delete action is triggered
+private fun isDeleteActionTriggered(): Boolean {
+    return isDeleteAction
+}
+searchListTemplateView.setOnListItemClickListener { delegateModel ->
+    if (delegateModel.getActionModel()?.action == "delete") {
+        // Trigger delete action
+        triggerDeleteAction()
+        
+        // Perform delete
+        SearchUtil.Companion.deleteRecentSearch(sharedPreferencesUtil, delegateModel)
+
+        // Refresh the overlay after deletion
+        val pageModel = searchOverlayView?.tag as? AtomicMoleculeListPageModel
+        pageModel?.let {
+            SearchUtil.Companion.modelWithSearchHistory(it, sharedPreferencesUtil)
+            searchListTemplateView.applyStyle(it.listTemplate)
+        }
+    } else {
+        // Handle other actions
+        executeAction(delegateModel.getActionModel())
+    }
+}
