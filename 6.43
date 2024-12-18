@@ -1,0 +1,20 @@
+else if (event.getAction() == ResponseHandlingEvent.Action.SAVE_SEARCH_HISTORY) {
+    if (event.getExtraInfo() instanceof SaveSearchQueryAction action) {
+        if (action.getAction() != null && action.getAction().equals("save")) {
+            SearchUtil.Companion.saveRecentSearches(sharedPreferencesUtil, action);
+        } else {
+            // Delete the search
+            boolean isDeleted = SearchUtil.Companion.deleteRecentSearch(sharedPreferencesUtil, action);
+            
+            if (isDeleted) {
+                // Refresh the search history model to reflect the changes
+                AtomicMoleculeListPageModel pageModel = // Get the current model here, if available
+                    (AtomicMoleculeListPageModel) searchOverlayView.getTag(); // Assuming you tag the model
+                if (pageModel != null) {
+                    SearchUtil.Companion.modelWithSearchHistory(pageModel, sharedPreferencesUtil);
+                    searchListTemplateView.applyStyle(pageModel.getListTemplate());
+                }
+            }
+        }
+    }
+}
