@@ -1,0 +1,28 @@
+fun modelWithSearchHistory(
+    pageModel: AtomicMoleculeListPageModel?,
+    sharedPreferencesUtil: SharedPreferencesUtil?
+) {
+    pageModel?.listTemplate?.list?.let { sectionList ->
+        val searchData = sharedPreferencesUtil?.nSearchList
+        val delegateModelList = mutableListOf<DelegateModel>()
+
+        searchData?.split(",")?.forEach { query ->
+            if (query.isNotEmpty()) {
+                delegateModelList.add(recentSearchModel(query))
+            }
+        }
+
+        // Find the "SearchHistory" section by its ID
+        val searchHistorySectionIndex = sectionList.indexOfFirst { it.moleculeId == "SearchHistory" }
+
+        if (searchHistorySectionIndex != -1) {
+            if (delegateModelList.isNotEmpty()) {
+                // If there are recent searches, add them under the section
+                sectionList.addAll(searchHistorySectionIndex + 1, delegateModelList)
+            } else {
+                // If there are no recent searches, remove the section entirely
+                sectionList.removeAt(searchHistorySectionIndex)
+            }
+        }
+    }
+}
