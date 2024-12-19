@@ -1,0 +1,39 @@
+class SearchHighlightLabelView : LabelAtomView {
+    constructor(mContext: Context) : super(mContext)
+    constructor(mContext: Context, attribute: AttributeSet) : super(mContext, attribute)
+    constructor(mContext: Context, attribute: AttributeSet, style: Int) : super(
+        mContext,
+        attribute,
+        style
+    )
+
+    override fun applyStyle(model: LabelAtomModel) {
+        super.applyStyle(model)
+        val query = model.searchQuery ?: return
+        val resultText = model.text ?: return
+
+        // Apply bolding logic
+        text = highlightQueryInText(query, resultText)
+    }
+
+    private fun highlightQueryInText(query: String, resultText: String): SpannableString {
+        val spannableString = SpannableString(resultText)
+        val startIndex = resultText.lowercase().indexOf(query.lowercase())
+        if (startIndex >= 0) {
+            val endIndex = startIndex + query.length
+            spannableString.setSpan(
+                StyleSpan(Typeface.BOLD), // Apply bold style
+                startIndex,
+                endIndex,
+                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+        }
+        return spannableString
+    }
+}
+
+
+onEach { query ->
+    performApiCall(query)
+    searchHighlightLabelView?.applyStyle(LabelAtomModel(text = resultText, searchQuery = query))
+}
