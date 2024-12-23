@@ -1,0 +1,61 @@
+override fun onFocusChange(p0: View?, focus: Boolean) {  
+    if (focus) {  
+        iv_hab_back?.visibility = View.VISIBLE  
+        iv_assistant?.visibility = View.INVISIBLE  
+        divider?.visibility = GONE  
+
+        if (inverted) {  
+            hab_content_view_root?.setBackgroundResource(R.drawable.background_hab_square_dark)  
+            iv_hab_back?.setColorFilter(ContextCompat.getColor(this.context, R.color.white))  
+        } else {  
+            hab_content_view_root?.setBackgroundResource(R.drawable.background_hab_square_light)  
+            iv_hab_back?.setColorFilter(ContextCompat.getColor(this.context, R.color.black))  
+        }  
+
+        if (!scope.isActive) {  
+            scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)  
+            observerSearch()  
+        }  
+        isSearchActive = true  
+        onSearchListener?.showOrHideOverlay(  
+            true,  
+            globalSearchListTemplateModel = initialSearchTemplate()  
+        )  
+        searchResultsView?.text?.toString()?.let {  
+            if (it.isNotEmpty()) {  
+                performApiCall(it)  
+            }  
+        }  
+    } else {  
+        // Reset background to original rounded corner background  
+        if (inverted) {  
+            hab_content_view_root?.setBackgroundResource(R.drawable.background_hab_dark)  
+        } else {  
+            hab_content_view_root?.setBackgroundResource(R.drawable.background_hab_light)  
+        }  
+
+        iv_hab_back?.visibility = View.GONE  
+        divider?.visibility = VISIBLE  
+        isSearchActive = false  
+        hab_content_view_root?.setBackgroundColor(Color.TRANSPARENT)  
+    }  
+}  
+
+<?xml version="1.0" encoding="utf-8"?>  
+<shape xmlns:android="http://schemas.android.com/apk/res/android"  
+    android:shape="rectangle">  
+    <solid android:color="@color/vds_color_background_secondary_dark" />  
+    <stroke  
+        android:width="1dp"  
+        android:color="@color/vds_color_elements_secondary_onlight" />  
+</shape>  
+
+<?xml version="1.0" encoding="utf-8"?>  
+<shape xmlns:android="http://schemas.android.com/apk/res/android"  
+    android:shape="rectangle">  
+    <solid android:color="@color/vds_color_palette_white" />  
+    <stroke  
+        android:width="1dp"  
+        android:color="@color/vds_color_interactive_disabled_onlight" />  
+</shape>  
+
