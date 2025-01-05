@@ -1,0 +1,37 @@
+private fun animateSearchBarFocusChange() {
+    // Ensure the back button is initially hidden
+    iv_hab_back?.visibility = View.GONE
+
+    // Get the original width of the search bar
+    val initialWidth = rootRl?.width ?: 0
+
+    // Target width when the back button is visible (adjust as needed)
+    val targetWidth = resources.getDimensionPixelSize(R.dimen.search_bar_target_width)
+
+    // Create an animation to resize the search bar
+    val widthAnimator = ValueAnimator.ofInt(initialWidth, targetWidth).apply {
+        duration = 300 // Duration of the animation in milliseconds
+        addUpdateListener { animator ->
+            val animatedValue = animator.animatedValue as Int
+            val layoutParams = rootRl?.layoutParams
+            layoutParams?.width = animatedValue
+            rootRl?.layoutParams = layoutParams
+        }
+    }
+
+    // Listener for the end of the animation
+    widthAnimator.addListener(object : AnimatorListenerAdapter() {
+        override fun onAnimationEnd(animation: Animator?) {
+            super.onAnimationEnd(animation)
+            // Show the back button after animation completes
+            iv_hab_back?.visibility = View.VISIBLE
+        }
+    })
+
+    // Start the animation
+    widthAnimator.start()
+}
+
+
+
+<dimen name="search_bar_target_width">250dp</dimen>
