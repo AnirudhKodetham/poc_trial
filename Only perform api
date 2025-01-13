@@ -1,0 +1,46 @@
+private fun performApiCall(query: String) {
+    if (!isSearchActive) {
+        return
+    }
+
+    val requestParams = hashMapOf<String, Any>(
+        "searchInput" to query,
+        "searchPageType" to (initializeActivity()?.currentFragment?.pageType ?: "")
+    )
+
+    val onSearchSuccessCallback = object : Callback<BaseResponse> {
+        override fun notify(baseResponse: BaseResponse) {
+            if (searchResultsView?.text.toString().isNotEmpty()) {
+                onSearchListener?.habSearchResults(baseResponse)
+            } else {
+                onSearchListener?.showOrHideOverlay(
+                    true,
+                    globalSearchListTemplateModel = initialSearchTemplate()
+                )
+            }
+        }
+    }
+
+    val onExceptionCallback = object : Callback<Exception> {
+        override fun notify(exception: Exception) {
+            // Log or display error and remain on the current page
+            Log.e("SearchError", "API failed: ${exception.message}")
+            onSearchListener?.showOrHideOverlay(
+                true,
+                globalSearchListTemplateModel = initialSearchTemplate()
+            )
+        }
+    }
+
+    searchJob?.cancel()
+    searchJob = scope.launch {
+        searchAction?.let {
+            globalSearchViewPresenter?.getOverlayData(
+                it,
+                requestParams,
+                onSearchSuccessCallback,
+                onExceptionCallback // Pass the exception callback here
+            )
+        }
+    }
+}
