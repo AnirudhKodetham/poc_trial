@@ -1,0 +1,44 @@
+fun getOverlayData(
+    SearchActionModel: ActionModel,
+    requestParams: java.util.HashMap<String, Any>,
+    onSearchSuccessCallback: Callback<BaseResponse>,
+    onExceptionCallback: Callback<Exception> // Added exception callback
+) {
+    val action = SearchActionModel.let { ActionModelConverter.convertToAction(it) }
+    action ?: return
+
+    val request = AtomicFormRequest()
+    request.requestParams = requestParams
+
+    requestExecutor.executeRequest(
+        getResourceToConsume(
+            action,
+            request,
+            onSearchSuccessCallback,
+            onExceptionCallback // Pass the exception callback
+        )
+    )
+}
+val onExceptionCallback = object : Callback<Exception> {
+    override fun notify(exception: Exception) {
+        // Handle the exception (e.g., show a toast, log error, or retry logic)
+        Log.e("SearchError", "Error occurred: ${exception.message}")
+        // Example: Show a retry option to the user
+        onSearchListener?.showOrHideOverlay(
+            true,
+            globalSearchListTemplateModel = initialSearchTemplate()
+        )
+    }
+}
+
+globalSearchViewPresenter?.getOverlayData(
+    searchActionModel,
+    requestParams,
+    onSearchSuccessCallback = { baseResponse ->
+        // Handle the successful response
+        onSearchListener?.habSearchResults(baseResponse)
+    },
+    onExceptionCallback = onExceptionCallback // Pass the exception callback
+)
+
+
