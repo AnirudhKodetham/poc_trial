@@ -1,0 +1,61 @@
+private fun performApiCall(query: String) {
+    if (!isSearchActive) {
+        return
+    }
+    val requestParams = hashMapOf<String, Any>(
+        "searchInput" to query,
+        "searchPageType" to (initializeActivity()?.currentFragment?.pageType ?: "")
+    )
+    searchJob?.cancel()
+    searchJob = scope.launch {
+        searchAction?.let {
+            globalSearchViewPresenter?.getOverlayData(
+                it,
+                requestParams,
+                { baseResponse -> // Success callback
+                    if (searchResultsView?.text.toString().isNotEmpty()) {
+                        onSearchListener?.habSearchResults(baseResponse)
+                    } else {
+                        onSearchListener?.showOrHideOverlay(
+                            true,
+                            globalSearchListTemplateModel = initialSearchTemplate()
+                        )
+                    }
+                },
+                { exception -> // Failure callback
+                    handleSearchException(exception)
+                }
+            )
+        }
+    }
+}
+
+fun getOverlayData(
+    searchActionModel: ActionModel,
+    requestParams: java.util.HashMap<String, Any>,
+    onSearchSuccessCallback: Callback<BaseResponse>,
+    onSearchFailureCallback: (Exception) -> Unit
+) {
+    val action = searchActionModel.let { ActionModelConverter.convertToAction(it) }
+    action ?: return
+    val request = AtomicFormRequest()
+    request.requestParams = requestParams
+    try {
+        requestExecutor.executeRequest(
+            getResourceToConsume(
+                action,
+                request,
+                onSearchSuccessCallback
+            )
+        )
+    } catch (exception: Exception) {
+        onSearchFailureCallback(exception)
+    }
+}
+
+// Exception handler
+private fun handleSearchException(exception: Exception) {
+    // Handle the exception here. For example, log the error and show a message to the user.
+    Log.e("SearchError", "An error occurred during search: ${exception.message}")
+    onSearchListener?.showErrorMessage("An error occurred. Please try again.")
+}
