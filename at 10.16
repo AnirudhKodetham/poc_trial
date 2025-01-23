@@ -1,0 +1,42 @@
+selectDeploymentTypeSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+    override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+        val selectedDeploymentType = parent?.getItemAtPosition(position).toString()
+
+        // Predefined mappings for deployment types and their corresponding autofill values
+        val deploymentMappings = mapOf(
+            "Prod" to Triple("MF Prod", "None", "NSA DC"),
+            "TdcCanary" to Triple("MF prod exp - TDC", "tdc-canary", "TDC"),
+            "SacCanary" to Triple("MF prod exp - SDC", "sac-canary", "SDC"),
+            "AwsEast" to Triple("MF Prod", "virginia", "AWS"),
+            "AwsWest" to Triple("MF Prod", "oregon", "AWS WEST"),
+            "TdcCanaryByPassCdn" to Triple("MF prod exp - TDC", "tdc-canary", "BYPASS CDN"),
+            "SacCanaryByPassCdn" to Triple("MF prod exp - SDC", "sac-canary", "BYPASS CDN"),
+            "AwsEastByPassCdn" to Triple("MF Prod", "virginia", "BYPASS CDN AWS EAST"),
+            "AwsWestByPassCdn" to Triple("MF Prod", "oregon", "BYPASS CDN AWS WEST")
+        )
+
+        // Get the corresponding autofill values for the selected deployment type
+        val autofillValues = deploymentMappings[selectedDeploymentType]
+
+        if (autofillValues != null) {
+            // Update selectmfserver spinner
+            val mfServerAdapter = selectmfserver.adapter as ArrayAdapter<CharSequence>
+            val mfServerPosition = mfServerAdapter.getPosition(autofillValues.first)
+            selectmfserver.setSelection(mfServerPosition)
+
+            // Update redirectTo spinner
+            val redirectToAdapter = redirectToSpinner.adapter as ArrayAdapter<CharSequence>
+            val redirectToPosition = redirectToAdapter.getPosition(autofillValues.second)
+            redirectToSpinner.setSelection(redirectToPosition)
+
+            // Update select_nsa_mfserver spinner
+            val nsaMfServerAdapter = selectnsamfserver.adapter as ArrayAdapter<CharSequence>
+            val nsaMfServerPosition = nsaMfServerAdapter.getPosition(autofillValues.third)
+            selectnsamfserver.setSelection(nsaMfServerPosition)
+        }
+    }
+
+    override fun onNothingSelected(parent: AdapterView<*>?) {
+        // Handle case when nothing is selected if needed
+    }
+}
