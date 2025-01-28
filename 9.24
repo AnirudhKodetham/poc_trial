@@ -1,0 +1,42 @@
+fun setBackGroundToSearch(inverted: Boolean, model: HABContentModel) {
+    val strokeWidth = 4 // Define the stroke width in pixels
+    val strokeColor = if (inverted) {
+        ContextCompat.getColor(this.context, R.color.vds_color_stroke_dark)
+    } else {
+        ContextCompat.getColor(this.context, R.color.vds_color_stroke_light)
+    }
+
+    if (inverted) {
+        rootRl?.let {
+            gradientDrawable?.apply {
+                setColor(
+                    ContextCompat.getColor(
+                        this@YourActivity.context,
+                        R.color.vds_color_background_secondary_dark
+                    )
+                )
+                setStroke(strokeWidth, strokeColor) // Add stroke here
+            }
+            rootRl?.background = gradientDrawable
+            searchResultsView?.setHintTextColor(Color.LTGRAY)
+            searchResultsView?.setTextColor(Color.WHITE)
+            searchResultsView?.setBackgroundColor(Color.TRANSPARENT)
+        }
+    } else {
+        rootRl?.let {
+            gradientDrawable?.apply {
+                setColor(
+                    ContextCompat.getColor(
+                        this@YourActivity.context,
+                        R.color.vds_color_palette_white
+                    )
+                )
+                setStroke(strokeWidth, strokeColor) // Add stroke here
+            }
+            rootRl?.background = gradientDrawable
+            searchResultsView?.setBackgroundColor(Color.WHITE)
+            searchResultsView?.setHintTextColor(Color.LTGRAY)
+            searchResultsView?.setTextColor(Color.BLACK)
+        }
+    }
+}
