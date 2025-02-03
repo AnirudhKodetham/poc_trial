@@ -1,0 +1,47 @@
+object NavigationTracker {
+    val navigationHistory = mutableListOf<String>()
+
+    fun addEntry(entry: String) {
+        navigationHistory.add(entry)
+        Log.d("NavigationTracker", "Visited: $entry")
+    }
+
+    fun getHistory(): List<String> = navigationHistory
+}
+
+
+open fun updateNavigation(jsonObject: JsonObject) {
+    updateNavJsonObject = jsonObject
+
+    if (jsonObject.has(NAVIGATION_BAR)) {
+        val navJsonObject = jsonObject[NAVIGATION_BAR].asJsonObject
+        if (navJsonObject.has("url")) {
+            val webUrl = navJsonObject.get("url").asString
+            NavigationTracker.addEntry("WebView: $webUrl")
+        }
+    }
+}
+
+
+public void replaceFragment(final Fragment fragment, boolean addToBackStack) {
+    FragmentManager fragmentManager = getSupportFragmentManager();
+    final FragmentTransaction transaction = fragmentManager.beginTransaction();
+
+    String pageTag = fragment.getClass().getSimpleName();
+    if (fragment instanceof BaseFragment) {
+        pageTag = ((BaseFragment) fragment).getPageType();
+    }
+
+    NavigationTracker.INSTANCE.addEntry("Fragment: " + pageTag);
+    Log.d("NavigationTracker", "Navigated to: " + pageTag);
+
+    if (addToBackStack) {
+        transaction.addToBackStack(pageTag).replace(getFragmentContainerResID(), fragment, pageTag).commit();
+    } else {
+        transaction.replace(getFragmentContainerResID(), fragment, pageTag).commit();
+    }
+}
+
+
+val history = NavigationTracker.getHistory()
+Log.d("NavigationTracker", "User Navigation History: $history")
