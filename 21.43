@@ -1,0 +1,8 @@
+    if (jsonObject.has(NAVIGATION_BAR)) {
+        val navJsonObject = jsonObject[NAVIGATION_BAR].asJsonObject
+        if (navJsonObject.has("url")) { // Extract the WebView URL
+            val webUrl = navJsonObject["url"].asString
+            NavigationTracker.addEntry("WebView: $webUrl") // Save URL in session tracking
+            Log.d("NavigationTracker", "WebView Visited: $webUrl") // Log for debugging
+        }
+    }
