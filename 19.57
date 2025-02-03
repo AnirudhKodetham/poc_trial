@@ -1,0 +1,67 @@
+private var lastInputTime = 0L
+private var lastText = ""
+
+private fun searchTextFlow(): Flow<Pair<String, String>> = callbackFlow {
+    val watcher = object : TextWatcher {
+        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+            val newText = s.toString()
+            val currentTime = System.currentTimeMillis()
+            val inputType = detectInputMethod(newText, before, count, currentTime)
+
+            Log.d("SearchInput", "Detected Input: $inputType, Text: $newText")
+
+            lastText = newText
+            lastInputTime = currentTime
+
+            trySend(Pair(newText, inputType)).isSuccess
+        }
+
+        override fun afterTextChanged(s: Editable?) {}
+    }
+
+    searchResultsView?.addTextChangedListener(watcher)
+    awaitClose { searchResultsView?.removeTextChangedListener(watcher) }
+}
+
+private fun detectInputMethod(
+    newText: String, 
+    before: Int, 
+    count: Int, 
+    currentTime: Long
+): String {
+    val inputTimeGap = currentTime - lastInputTime
+    val clipboardText = getClipboardText()
+
+    return when {
+        // Voice Input: Large change, instant insert
+        count > 1 && before == 0 && inputTimeGap < 100 -> "Voice Input"
+
+        // Pasting: Large change, text exists in clipboard
+        count > 1 && clipboardText == newText -> "Pasted"
+
+        // Typing: Character-by-character, small delay
+        count == 1 && before == 0 -> "Typing"
+
+        else -> "Unknown"
+    }
+}
+
+private fun getClipboardText(): String {
+    val clipboard = MFAppContext.getInstance()
+        .getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+    return clipboard.primaryClip?.getItemAt(0)?.text?.toString() ?: ""
+}
+
+private fun observerSearch() {
+    searchTextFlow()
+        .debounce(300)
+        .filter { (query, _) -> query.isNotEmpty() && isSearchActive }
+        .distinctUntilChanged()
+        .onEach { (query, inputMethod) ->
+            Log.d("SearchObserver", "Performing search: $query | Input Method: $inputMethod")
+            performApiCall(query)
+        }
+        .launchIn(scope)
+}
