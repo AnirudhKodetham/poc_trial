@@ -1,0 +1,32 @@
+private fun searchTextFlow(): Flow<Pair<String, String>> = callbackFlow {
+    val watcher = object : TextWatcher {
+        private var lastText: String = ""
+
+        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+            val newText = s.toString()
+            val inputType = detectInputMethod(newText, before, count)
+
+            MFAppContext.getInstance().searchText = newText
+            onSearchListener?.onHabHighlightText()
+
+            trySend(Pair(newText, inputType)).isSuccess
+        }
+
+        override fun afterTextChanged(s: Editable?) {}
+    }
+    searchResultsView?.addTextChangedListener(watcher)
+    awaitClose { searchResultsView?.removeTextChangedListener(watcher) }
+}
+
+private fun detectInputMethod(text: String, before: Int, count: Int): String {
+    return when {
+        count > 1 && before == 0 -> "Voice Input"  // Entire phrase appears at once
+        count == 1 && before == 0 -> "Typing"      // Characters appearing one by one
+        before > 0 && count > 1 -> "Pasted"       // Clipboard paste detection
+        else -> "Unknown"
+    }
+}
+
+Log.d("SearchInput", "Detected Input: $inputType, Text: $text")
