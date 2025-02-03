@@ -1,0 +1,46 @@
+private fun searchTextFlow(): Flow<String> = callbackFlow {
+    val watcher = object : TextWatcher {
+        private var lastText: String = ""
+        private var lastInputTime = 0L
+
+        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+            lastText = s.toString()
+        }
+
+        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+            val newText = s.toString()
+            val currentTime = System.currentTimeMillis()
+            val timeDiff = currentTime - lastInputTime
+
+            when {
+                isTextPasted(newText, lastText) -> {
+                    Log.d("InputType", "Pasted Text")
+                }
+                isVoiceInput(timeDiff) -> {
+                    Log.d("InputType", "Voice Input")
+                }
+                else -> {
+                    Log.d("InputType", "Typed Text")
+                }
+            }
+
+            lastInputTime = currentTime
+            MFAppContext.getInstance().searchText = newText
+            onSearchListener?.onHabHighlightText()
+            trySend(newText).isSuccess
+        }
+
+        override fun afterTextChanged(s: Editable?) {}
+
+        private fun isTextPasted(newText: String, oldText: String): Boolean {
+            return newText.length - oldText.length > 5 // Bulk insert
+        }
+
+        private fun isVoiceInput(timeDiff: Long): Boolean {
+            return timeDiff > 500 // Voice input takes more time to process than typing
+        }
+    }
+
+    searchResultsView?.addTextChangedListener(watcher)
+    awaitClose { searchResultsView?.removeTextChangedListener(watcher) }
+}
