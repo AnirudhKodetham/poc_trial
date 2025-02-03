@@ -6,3 +6,12 @@
             Log.d("NavigationTracker", "WebView Visited: $webUrl") // Log for debugging
         }
     }
+
+
+    String pageTag = fragment.getClass().getSimpleName();
+    if (fragment instanceof BaseFragment) {
+        pageTag = ((BaseFragment) fragment).getPageType();
+    }
+
+    NavigationTracker.INSTANCE.addEntry("Fragment: " + pageTag);
+    Log.d("NavigationTracker", "Navigated to: " + pageTag);
