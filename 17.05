@@ -1,0 +1,79 @@
+private fun searchTextFlow(): Flow<String> = callbackFlow {
+    val watcher = object : TextWatcher {
+        private var lastText: String = ""
+
+        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+            lastText = s.toString()
+        }
+
+        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+            val newText = s.toString()
+            val inputType = detectInputType(newText, lastText)
+
+            when (inputType) {
+                InputType.VOICE -> Log.d("InputType", "Voice Input Detected")
+                InputType.PASTE -> Log.d("InputType", "Pasted Text")
+                InputType.TYPING -> Log.d("InputType", "Typed Text")
+            }
+
+            MFAppContext.getInstance().searchText = newText
+            onSearchListener?.onHabHighlightText()
+            trySend(newText).isSuccess
+        }
+
+        override fun afterTextChanged(s: Editable?) {}
+
+        private fun detectInputType(newText: String, oldText: String): InputType {
+            return when {
+                isVoiceInput -> InputType.VOICE
+                isTextPasted(newText, oldText) -> InputType.PASTE
+                else -> InputType.TYPING
+            }
+        }
+
+        private fun isTextPasted(newText: String, oldText: String): Boolean {
+            return newText.length - oldText.length > 5
+        }
+    }
+
+    searchResultsView?.apply {
+        addTextChangedListener(watcher)
+        if (this is VoiceDetectEditText) {
+            onVoiceInputDetected = {
+                isVoiceInput = true
+            }
+        }
+    }
+
+    awaitClose { searchResultsView?.removeTextChangedListener(watcher) }
+}
+
+private var isVoiceInput = false
+
+enum class InputType {
+    VOICE, PASTE, TYPING
+}
+
+
+class VoiceDetectEditText @JvmOverloads constructor(
+    context: Context,
+    attrs: AttributeSet? = null,
+    defStyleAttr: Int = 0
+) : androidx.appcompat.widget.AppCompatEditText(context, attrs, defStyleAttr) {
+
+    var onVoiceInputDetected: (() -> Unit)? = null
+
+    override fun onCreateInputConnection(outAttrs: EditorInfo): InputConnection? {
+        val inputConnection = super.onCreateInputConnection(outAttrs)
+        val isVoiceInput = (outAttrs.privateImeOptions ?: "").contains("voice")
+        
+        if (isVoiceInput) {
+            onVoiceInputDetected?.invoke()
+        }
+        
+        return inputConnection
+    }
+}
+searchResultsView.onVoiceInputDetected = {
+    Log.d("InputType", "Voice Input Detected!")
+}
