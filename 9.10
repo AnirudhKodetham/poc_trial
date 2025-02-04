@@ -1,0 +1,37 @@
+private fun searchTextFlow(): Flow<String> = callbackFlow {
+    var lastText = ""
+    var lastUpdateTime = System.currentTimeMillis()
+
+    val watcher = object : TextWatcher {
+        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+            MFAppContext.getInstance().searchText = s.toString()
+            onSearchListener?.onHabHighlightText()
+            trySend(s.toString()).isSuccess
+
+            // Detect Input Method
+            val currentTime = System.currentTimeMillis()
+            val timeDiff = currentTime - lastUpdateTime
+            val newText = s.toString()
+            val charDiff = newText.length - lastText.length
+
+            val inputType = when {
+                charDiff > 10 && timeDiff < 100 -> "Pasted"
+                charDiff > 10 && timeDiff > 500 -> "Voice Input"
+                charDiff == 1 && timeDiff > 50 -> "Typed"
+                else -> "Unknown"
+            }
+
+            lastText = newText
+            lastUpdateTime = currentTime
+
+            Log.d("InputMethod", "Detected: $inputType")
+        }
+
+        override fun afterTextChanged(s: Editable?) {}
+    }
+
+    searchResultsView?.addTextChangedListener(watcher)
+    awaitClose { searchResultsView?.removeTextChangedListener(watcher) }
+}
