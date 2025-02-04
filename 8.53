@@ -1,0 +1,69 @@
+private fun searchTextFlow(): Flow<Pair<String, InputSource>> = callbackFlow {
+    val clipboardManager = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+    val inputMethodManager = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+
+    var previousText: String = ""
+    var inputSource: InputSource = InputSource.TYPING
+
+    val watcher = object : TextWatcher {
+        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+            previousText = s.toString()
+        }
+
+        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+            val newText = s.toString()
+
+            inputSource = when {
+                isVoiceInput() -> InputSource.VOICE
+                isPastedText(previousText, newText) -> InputSource.PASTE
+                else -> InputSource.TYPING
+            }
+
+            trySend(Pair(newText, inputSource)).isSuccess
+        }
+
+        override fun afterTextChanged(s: Editable?) {}
+    }
+
+    searchResultsView?.addTextChangedListener(watcher)
+    awaitClose { searchResultsView?.removeTextChangedListener(watcher) }
+}
+
+// Enum for input source types
+enum class InputSource {
+    VOICE, PASTE, TYPING
+}
+
+// Check if the input method is voice input
+private fun isVoiceInput(): Boolean {
+    val inputMethodManager = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+    val currentInputMethod = Settings.Secure.getString(
+        contentResolver,
+        Settings.Secure.DEFAULT_INPUT_METHOD
+    )
+
+    return currentInputMethod.contains("com.google.android.inputmethod.latin")
+}
+
+// Check if text was pasted
+private fun isPastedText(previous: String, current: String): Boolean {
+    val clipboardManager = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+    return clipboardManager.hasPrimaryClip() && current.length - previous.length > 5
+}
+
+// Observer to handle search
+private fun observerSearch() {
+    searchTextFlow()
+        .debounce(300)
+        .filter { (query, _) -> query.isNotEmpty() && isSearchActive }
+        .distinctUntilChanged()
+        .onEach { (query, inputSource) ->
+            when (inputSource) {
+                InputSource.VOICE -> Log.d("SearchInput", "Voice input detected: $query")
+                InputSource.PASTE -> Log.d("SearchInput", "Pasted text detected: $query")
+                InputSource.TYPING -> Log.d("SearchInput", "Typed input detected: $query")
+            }
+            performApiCall(query)
+        }
+        .launchIn(scope)
+}
