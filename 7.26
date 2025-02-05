@@ -1,0 +1,36 @@
+class WebViewOpenURLInAppWebPunchOutFragment : Fragment() {
+    
+    private val storedEntries = mutableSetOf<String>()
+
+    override fun onProgressChanged(view: WebView, newProgress: Int) {
+        progress_line!!.progress = newProgress
+        if (newProgress == 100) {
+            if (StringUtils.isNotEmpty(view.url)) {
+                Uri.parse(view.url).apply {
+                    val newReclicLogUrl = "${this.scheme}://${this.host}${this.path}"
+                    Log.d("webviewURL", "$newReclicLogUrl")
+                    addToStoredEntries(newReclicLogUrl)
+                }
+            }
+            progress_line!!.visibility = View.GONE
+        }
+    }
+
+    private fun getCurrentPageType(): String? {
+        return (activity as? BaseActivity)?.getCurrentFragment()?.getPageType()
+    }
+
+    private fun addToStoredEntries(entry: String?) {
+        entry?.let {
+            if (storedEntries.add(it)) {
+                Log.d("StoredEntries", "Added: $it")
+            } else {
+                Log.d("StoredEntries", "Duplicate ignored: $it")
+            }
+        }
+    }
+
+    fun storeCurrentPageTypeOrUrl() {
+        getCurrentPageType()?.let { addToStoredEntries(it) }
+    }
+}
