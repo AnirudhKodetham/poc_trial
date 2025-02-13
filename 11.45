@@ -1,0 +1,27 @@
+protected void replaceFragment(ResponseHandlingEvent event) {
+    executeCommand(new ReplaceFragmentCommand(event, eventBus, log));
+
+    String pageTypeValue = event.getBaseResponse().getPageType(); 
+    NewRelicEvents newRelicEvent = new NewRelicEvents();
+    newRelicEvent.setPageType(pageTypeValue);
+    newRelicEvent.addEvent(newRelicEvent.getUserJourney()); // Ensuring it's logged under "userJourney"
+
+    Log.d("webviewURL", pageTypeValue);
+}
+
+
+public void setFirebaseInitModel(FirebaseInitModel firebaseInitModel) {
+    this.firebaseInitModel = firebaseInitModel;
+    
+    String firebaseParams = firebaseInitModel.getFirebaseModelParams().toString();
+    String newSessionId = UUID.randomUUID().toString(); // Creating a new session ID
+
+    NewRelicEvents newRelicEvent = new NewRelicEvents();
+    newRelicEvent.setRequestUUID(newSessionId); // Storing the session ID
+    newRelicEvent.setPageURL(firebaseParams); // Storing Firebase params as pageURL
+    newRelicEvent.addEvent(newRelicEvent.getUserJourney()); // Logging under "userJourney"
+
+    Log.d("FirebaseInitModel", firebaseParams);
+}
+
+ map[requestUUIDKey] = requestUUID.ifEmpty { UUID.randomUUID().toString() }
