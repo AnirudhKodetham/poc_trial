@@ -25,3 +25,18 @@ override fun doUpdateVisitedHistory(view: WebView?, url: String?, isReload: Bool
         Log.d("WebViewLogger", "Visited URL: $ReclicLogUrl")
     }
 }
+
+
+override fun doUpdateVisitedHistory(view: WebView?, url: String?, isReload: Boolean) {
+    super.doUpdateVisitedHistory(view, url, isReload)
+
+    url?.let {
+        val uri = Uri.parse(it)
+        var ReclicLogUrl = "${uri.scheme}://${uri.host}${uri.path}"
+
+        // Ensure multiple slashes are replaced with a single slash
+        ReclicLogUrl = ReclicLogUrl.replace(Regex("/{2,}"), "/").replace(":/", "://")
+
+        Log.d("WebViewLogger", "Visited URL: $ReclicLogUrl")
+    }
+}
