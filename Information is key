@@ -1,0 +1,32 @@
+iOS 16 (Developer-Focused Features)
+	1.	Live Activities API – Enables real-time updates on the Lock Screen (e.g., sports scores, delivery tracking).
+	2.	Lock Screen Widgets – Supports interactive widgets for quick app access.
+	3.	Focus Filters API – Customizes in-app content based on the user’s Focus mode.
+	4.	RoomPlan API – Uses LiDAR to create 3D room scans for AR applications.
+	5.	Passkeys – Secure, passwordless authentication system using Face ID/Touch ID.
+	6.	App Intents Framework – Enhances Siri and Spotlight integrations with deeper app interactions.
+	7.	Metal 3 – Optimized graphics API with better resource loading and upscaling for gaming.
+	8.	Advanced Collaboration Features – Real-time document and media collaboration using Messages and FaceTime.
+
+
+iOS 17 (Developer-Focused Features)
+	1.	Live Activities for More Apps – Expanded support, including new use cases like flight tracking.
+	2.	Interactive Widgets – Home Screen widgets now support user interaction.
+	3.	Alternative App Stores – Allows distribution of apps outside the App Store (EU only).
+	4.	Safari WebKit Updates – Support for alternative browser engines and better Progressive Web Apps (PWAs).
+	5.	Privacy Manifests & SDK Signatures – Enforces transparency for third-party SDKs.
+	6.	Core ML Upgrades – Faster on-device AI model processing with better power efficiency.
+	7.	Vision Framework Enhancements – Improved image recognition and object tracking.
+	8.	SharePlay Enhancements – Supports full-screen interactions and AirDrop-based shared activities.
+
+iOS 18 (Developer-Focused Features)
+	1.	Apple Intelligence APIs – Enables generative AI-powered features like text enhancement and image creation.
+	2.	Controls API – Allows apps to add custom quick actions to Control Center and Lock Screen.
+	3.	App Intents Expansion – Deeper integration with Siri, Spotlight, and system-wide suggestions.
+	4.	Enhanced Passkeys & Authentication – More streamlined biometric login options.
+	5.	Advanced Core ML & On-Device AI – Optimized machine learning models for improved performance.
+	6.	New Vision & ARKit Capabilities – More accurate object detection and real-world mapping.
+	7.	App Store Policy Changes – More flexibility in app monetization and distribution.
+	8.	Improved Background Tasks – Better resource allocation for background activities.
+
+These updates provide developers with powerful tools for AI, interactivity, privacy, and performance improvements across iOS versions.
