@@ -1,0 +1,18 @@
+iOS 16:
+	•	Lock Screen Customization: Users gained the ability to personalize their lock screens with widgets, photos, and stylized date and time displays. For developers, this opened opportunities to create engaging widgets that users could add directly to their lock screens.
+	•	Focus Filters: This feature allowed apps to display specific content based on the user’s current Focus mode (e.g., Work, Personal). Developers could tailor their app’s content and notifications to align with the user’s context, enhancing relevance and user engagement.
+	•	Live Activities: Introduced as dynamic notifications, Live Activities enabled apps to present real-time information on the lock screen, such as live sports scores or delivery statuses. This provided developers with a new way to keep users informed without requiring them to unlock their devices.
+	•	RoomPlan API: A new framework that allowed apps to quickly create 3D floor plans of rooms using the LiDAR Scanner introduced with the iPhone 12 Pro and iPhone 12 Pro Max.  ￼
+
+iOS 17:
+	•	Third-Party Browser Engines: For the first time, developers could release web browsers using their own web engines, not just WebKit. This allowed for greater innovation and differentiation in browser offerings on iOS devices.
+	•	Alternative App Stores: Developers could distribute apps through third-party app stores, providing alternative avenues for app distribution and potentially reducing reliance on Apple’s App Store.
+	•	Safari Profiles: Safari introduced profiles to separate browsing activities (e.g., work vs. personal). Developers creating Safari extensions could specify compatibility with specific profiles, ensuring their tools functioned appropriately across different user contexts.
+	•	AV1 Codec Support: The inclusion of AV1 hardware decoding on iPhone 15 Pro models allowed developers to deliver high-quality video content more efficiently, optimizing performance and reducing data usage.
+
+iOS 18:
+	•	Apple Intelligence: This suite of AI-powered features enabled developers to integrate advanced generative models directly into their apps. Tools like Writing Tools, Image Playground API, and Genmoji allowed for enhanced text manipulation, image creation, and personalized emoji generation, enriching user interactions.  ￼
+	•	App Intents Enhancements: Developers could define more sophisticated interactions with Siri and Spotlight, enabling users to perform complex tasks and access app-specific functionalities through voice commands or search queries. This deepened integration enhanced app discoverability and usability.
+	•	Controls API: A new Controls API allowed developers to create custom controls accessible from the Control Center and Lock Screen. This facilitated quicker access to app functionalities, improving user engagement and convenience.
+	•	Machine Learning Improvements: Updates to Core ML and Create ML provided developers with more efficient tools for running advanced machine learning models on-device. This enabled apps to offer smarter features with improved performance and privacy.
+	•	Passkeys: As a more secure and user-friendly alternative to passwords, passkeys allowed developers to implement streamlined authentication processes, enhancing security and reducing friction during user sign-ins.
